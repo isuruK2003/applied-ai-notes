@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 1 – Introduction to artificial intelligence</title>
+<script>(function(){try{var t=localStorage.getItem('applied-ai-theme');if(t==='dark'||t==='system')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf9f5; --surface:#faf9f5; --surface-2:#f0eee6; --ink:#141413; --ink-2:#5e5d59; --muted:#87867f;
+  --line:#e8e6dc; --line-2:#d1cfc5; --accent:#c4643f; --accent-soft:#f6e4dc; --accent-2:#4f7fae; --accent-2-soft:#e4ecf4;
+  --ok:#5f7349; --ok-soft:#eaeee0; --warn:#8a6a37; --warn-soft:#f4eee1; --err:#bf4d43;
+  --max:#e2ebf4; --max-line:#6a9bcc; --min:#f3e0e7; --min-line:#c46686; --chance:#efe7d6; --chance-line:#b0894f;
+  --leaf:#ebeaf2; --leaf-line:#8e8ca8; --code:#f5f4ed;
+  --radius:10px;
+  --serif:"Source Serif 4", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font:"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"Geist Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){ :root[data-theme="system"]{
+    --bg:#141413; --surface:#1a1918; --surface-2:#262624; --ink:#faf9f5; --ink-2:#b0aea5; --muted:#87867f;
+    --line:#30302e; --line-2:#3d3d3a; --accent:#d97757; --accent-soft:rgba(217,119,87,.14); --accent-2:#6a9bcc; --accent-2-soft:rgba(106,155,204,.12);
+    --ok:#9bb27f; --ok-soft:rgba(120,140,93,.16); --warn:#d4b483; --warn-soft:rgba(212,180,131,.10); --err:#e0796f;
+    --max:#22303d; --max-line:#6a9bcc; --min:#3a2530; --min-line:#d283a0; --chance:#332d22; --chance-line:#d4b483;
+    --leaf:#2a2933; --leaf-line:#a9a7c4; --code:#1f1e1d; color-scheme: dark;
+} }
+:root[data-theme="dark"]{
+    --bg:#141413; --surface:#1a1918; --surface-2:#262624; --ink:#faf9f5; --ink-2:#b0aea5; --muted:#87867f;
+    --line:#30302e; --line-2:#3d3d3a; --accent:#d97757; --accent-soft:rgba(217,119,87,.14); --accent-2:#6a9bcc; --accent-2-soft:rgba(106,155,204,.12);
+    --ok:#9bb27f; --ok-soft:rgba(120,140,93,.16); --warn:#d4b483; --warn-soft:rgba(212,180,131,.10); --err:#e0796f;
+    --max:#22303d; --max-line:#6a9bcc; --min:#3a2530; --min-line:#d283a0; --chance:#332d22; --chance-line:#d4b483;
+    --leaf:#2a2933; --leaf-line:#a9a7c4; --code:#1f1e1d; color-scheme: dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.72 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01"}
+::selection{background:var(--accent);color:#fff}
+a{color:var(--accent);text-decoration:none;text-underline-offset:3px}
+a:hover{text-decoration:underline}
+strong,b{font-weight:600}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+@media (max-width:600px){.wrap{padding:0 16px}}
+
+/* header */
+header.top{border-bottom:1px solid var(--line)}
+header.top .wrap{padding-top:56px;padding-bottom:44px}
+@media (max-width:600px){header.top .wrap{padding-top:32px;padding-bottom:28px}}
+.crumbs{font-size:13px;color:var(--muted);margin-bottom:22px;font-family:var(--mono)}
+.crumbs a{color:var(--muted)}.crumbs a:hover{color:var(--ink);text-decoration:none}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:500 12px/1 var(--mono);letter-spacing:.02em;color:var(--ink-2);border:1px solid var(--line);padding:6px 10px;border-radius:99px;background:var(--surface-2)}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+h1{font-size:clamp(34px,5.2vw,54px);line-height:1.05;margin:18px 0 14px;letter-spacing:-.04em;font-weight:600}
+.meta{color:var(--ink-2);font-size:15px;max-width:760px}
+
+/* layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:56px;padding-top:16px;padding-bottom:72px}
+@media (min-width:1000px){.layout{grid-template-columns:220px minmax(0,1fr)}}
+nav.toc{font-size:13.5px}
+@media (min-width:1000px){nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding-top:40px}}
+@media (max-width:999px){nav.toc{padding-top:24px}}
+nav.toc h2{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
+nav.toc li{margin:0}
+nav.toc a{display:block;color:var(--ink-2);padding:5px 0 5px 14px;margin-left:-1px;border-left:1px solid transparent;line-height:1.4;transition:color .15s,border-color .15s}
+nav.toc a:hover{color:var(--ink);text-decoration:none}
+nav.toc a.active{color:var(--ink);border-left-color:var(--ink);font-weight:500}
+main{min-width:0}
+
+/* sections */
+section{padding:40px 0 36px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:none}
+section>h2{font-size:28px;margin:0 0 6px;line-height:1.2;letter-spacing:-.025em;font-weight:600;scroll-margin-top:24px}
+section>h2 .num{display:block;font:500 12px/1 var(--mono);color:var(--accent);letter-spacing:.04em;margin-bottom:12px}
+h3{font-size:19px;margin:34px 0 8px;letter-spacing:-.015em;font-weight:600}
+h4{font-size:15.5px;margin:22px 0 6px;font-weight:600;letter-spacing:-.01em}
+.slides{font:400 12px/1 var(--mono);color:var(--muted);margin:10px 0 18px}
+p{margin:10px 0;color:var(--ink)}
+ul,ol{padding-left:22px;margin:10px 0}
+li{margin:5px 0}
+li::marker{color:var(--muted)}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+pre{font:400 13.5px/1.65 var(--mono);background:var(--code);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;overflow-x:auto;margin:18px 0}
+pre .kw{color:var(--accent);font-weight:500}
+pre .cm{color:var(--muted)}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{border-bottom:1px solid var(--line);padding:10px 14px;text-align:left;vertical-align:top}
+tr:last-child>td,tr:last-child>th{border-bottom:none}
+th{font-weight:500;color:var(--ink-2);background:var(--surface-2);font-size:13px}
+td+td,th+th,td+th,th+td{border-left:1px solid var(--line)}
+td.c,th.c{text-align:center}
+.callout .table-wrap{background:var(--surface)}
+
+/* callouts */
+.callout{border:1px solid var(--line);background:var(--surface-2);border-radius:var(--radius);padding:14px 18px;margin:20px 0}
+.callout>strong:first-child{display:flex;align-items:center;gap:8px;font:500 11.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;color:var(--accent)}
+.callout>strong:first-child::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.callout.beyond{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 22%,transparent)}
+.callout.beyond>strong:first-child{color:var(--warn)}
+.callout.key{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 22%,transparent)}
+.callout.key>strong:first-child{color:var(--ok)}
+.callout.note{background:var(--accent-2-soft);border-color:color-mix(in srgb,var(--accent-2) 22%,transparent)}
+.callout.note>strong:first-child{color:var(--accent-2)}
+.tag-beyond{font:500 10.5px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--warn);background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 25%,transparent);border-radius:99px;padding:3px 8px;margin:0 2px;vertical-align:1px}
+
+/* glance / cards */
+.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;margin-top:22px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.glance div{background:var(--surface);padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
+.glance b{display:block;margin-bottom:6px;color:var(--muted);font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:16px 0}
+.card{border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;background:var(--surface)}
+.card h4{margin-top:0}
+.card ul{margin-bottom:0}
+.pill{display:inline-block;font-size:12.5px;padding:3px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--line);margin:3px 3px 3px 0;color:var(--ink-2)}
+dl.terms{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:0;margin:16px 0;border-top:1px solid var(--line)}
+dl.terms dt,dl.terms dd{padding:11px 0;border-bottom:1px solid var(--line)}
+dl.terms dt{font-weight:500;padding-right:16px}
+dl.terms dd{margin:0;color:var(--ink-2)}
+@media (max-width:600px){dl.terms{grid-template-columns:1fr}dl.terms dt{border-bottom:none;padding-bottom:0}dl.terms dd{padding-top:4px}}
+
+/* figures */
+figure.diagram{margin:24px 0;border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:var(--surface-2);
+  background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px}
+figure.diagram .scroll{overflow-x:auto}
+figure.diagram svg{display:block;width:100%;height:auto;margin:0 auto}
+figcaption{font-size:13.5px;color:var(--ink-2);margin:14px auto 0;text-align:center;max-width:680px;line-height:1.55}
+figcaption .legend{display:block;margin-top:6px;color:var(--muted);font:400 12px/1.5 var(--mono)}
+
+/* svg styles */
+svg text{font-family:var(--font);fill:var(--ink)}
+.edge{stroke:var(--line-2);stroke-width:1.5}
+.edge.pruned{stroke:var(--muted);stroke-dasharray:4 4;opacity:.7}
+.edge.hi{stroke:var(--accent);stroke-width:3}
+.elabel{font-size:12px;fill:var(--ink-2);font-family:var(--mono)!important}
+.n-max{fill:var(--max);stroke:var(--max-line);stroke-width:1.5}
+.n-min{fill:var(--min);stroke:var(--min-line);stroke-width:1.5}
+.n-chance{fill:var(--chance);stroke:var(--chance-line);stroke-width:1.5}
+.n-leaf{fill:var(--leaf);stroke:var(--leaf-line);stroke-width:1.3}
+.n-box{fill:var(--surface);stroke:var(--line-2);stroke-width:1.3}
+.n-box.expanded{fill:var(--max);stroke:var(--max-line)}
+.n-box.fringe{fill:var(--surface);stroke:var(--accent-2);stroke-dasharray:4 3}
+.n-box.goal{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.n-box.cur{fill:var(--accent-2-soft);stroke:var(--accent-2);stroke-width:2}
+.pruned{opacity:.45}
+.hi.n-max,.hi.n-min,.hi.n-leaf,.hi.n-box{stroke:var(--accent);stroke-width:2.6}
+.nval{font-size:14px;font-weight:600;text-anchor:middle}
+.nlabel{font-size:13px;font-weight:500;text-anchor:middle}
+.nsub{font-size:11px;text-anchor:middle;fill:var(--ink-2);font-family:var(--mono)!important}
+.nnote{font-size:11.5px;text-anchor:middle;fill:var(--ink-2)}
+.xmark{font-size:10.5px;text-anchor:middle;fill:var(--accent-2);font-weight:500}
+.badge{fill:var(--ink);stroke:none}
+.badge-t{font-size:10px;font-weight:600;text-anchor:middle;fill:var(--bg);font-family:var(--mono)!important}
+.road{stroke:var(--line-2);stroke-width:2}
+.road.opt{stroke:var(--accent);stroke-width:4.5}
+.road.greedy{stroke:var(--accent-2);stroke-width:4.5;stroke-dasharray:9 5}
+.dist{font-size:11px;text-anchor:middle;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface-2);stroke-width:7px;font-family:var(--mono)!important}
+.city{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+.city.goal{fill:var(--ok)}
+.city.start{fill:var(--accent)}
+.cname{font-size:12.5px;font-weight:500;paint-order:stroke;stroke:var(--surface-2);stroke-width:5px}
+.axis{stroke:var(--line-2);stroke-width:1.4}
+.curve{fill:none;stroke:var(--accent);stroke-width:3}
+.guide{stroke:var(--muted);stroke-dasharray:3 4}
+.small{font-size:12px;fill:var(--ink-2)}
+.set{stroke-width:1.6}
+
+/* revision */
+details.qa{border:1px solid var(--line);border-radius:var(--radius);margin:10px 0;background:var(--surface);transition:border-color .15s}
+details.qa:hover{border-color:var(--line-2)}
+details.qa summary{cursor:pointer;padding:14px 18px 14px 48px;font-weight:500;list-style:none;position:relative;line-height:1.5}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"";position:absolute;left:18px;top:17px;width:18px;height:18px;border-radius:6px;border:1px solid var(--line-2);
+  background:linear-gradient(var(--ink-2),var(--ink-2)) center/8px 1.5px no-repeat,linear-gradient(var(--ink-2),var(--ink-2)) center/1.5px 8px no-repeat}
+details.qa[open] summary::before{background:linear-gradient(var(--ink-2),var(--ink-2)) center/8px 1.5px no-repeat}
+details.qa .ans{padding:14px 18px 16px 48px;border-top:1px solid var(--line);color:var(--ink-2)}
+details.qa .ans figure{margin-left:-30px}
+
+/* pager & footer */
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:40px}
+@media (max-width:600px){.pager{grid-template-columns:1fr}}
+.pager a{border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;color:var(--ink);font-weight:500;transition:border-color .15s}
+.pager a:hover{border-color:var(--ink);text-decoration:none}
+.pager small{display:block;color:var(--muted);font:400 12px/1.6 var(--mono);margin-bottom:2px}
+.pager .next{text-align:right;grid-column:2}
+@media (max-width:600px){.pager .next{grid-column:1}}
+footer{color:var(--muted);font-size:13px;padding:28px 24px 48px;border-top:1px solid var(--line)}
+
+/* timeline */
+.timeline{list-style:none;padding:0;margin:20px 0;position:relative}
+.timeline::before{content:"";position:absolute;left:5px;top:10px;bottom:10px;width:1px;background:var(--line-2)}
+.timeline>li{position:relative;padding:0 0 18px 30px;margin:0}
+.timeline>li::before{content:"";position:absolute;left:0;top:7px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+.timeline>li.winter::before{border-color:var(--min-line);background:var(--min-line)}
+.timeline .era{font-weight:600}
+.timeline .yrs{display:inline-block;font:500 12.5px/1 var(--mono);color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);padding:4px 7px;border-radius:6px;margin-right:8px}
+.timeline ul{margin:6px 0 0;color:var(--ink-2)}
+
+@media print{
+  nav.toc,.pager{display:none}
+  .layout{grid-template-columns:1fr}
+  section{break-inside:auto;padding:16px 0}
+  details.qa{break-inside:avoid}
+  figure.diagram{background-image:none}
+}
+
+/* theme switcher */
+.foot-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.foot-row>div:first-child{flex:1 1 380px}
+.theme-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:99px;background:var(--surface-2)}
+.theme-switch .ts-l{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 8px 0 10px}
+.theme-switch button{display:inline-flex;align-items:center;gap:6px;font:500 13px/1 var(--font);color:var(--ink-2);background:transparent;border:0;border-radius:99px;padding:7px 12px;cursor:pointer;transition:background .15s,color .15s}
+.theme-switch button:hover{color:var(--ink)}
+.theme-switch button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.theme-switch svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:600px){footer{padding:24px 16px 40px}}
+@media (max-width:440px){.theme-switch .ts-l{display:none}.theme-switch button{padding:7px 10px}}
+@media (max-width:340px){.theme-switch svg{display:none}}
+@media print{.theme-switch{display:none}}
+
+.q-intro{color:var(--ink-2);font-size:14.5px}
+.quizbar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin:18px 0 10px}
+.qb-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:14.5px}
+.qb-row>div:first-child{font-size:15px}
+.qb-score{font:600 20px/1 var(--mono)}
+.qb-l{color:var(--muted);font:500 12px/1 var(--mono);letter-spacing:.03em}
+.qb-reset{margin-left:auto}
+.qb-track{height:4px;background:var(--surface-2);border-radius:99px;margin-top:10px;overflow:hidden}
+.qb-fill{height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .4s ease}
+.qb-final{margin-top:10px;font-size:14.5px;font-weight:500}
+.q{border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin:14px 0;background:var(--surface);transition:border-color .2s}
+.q.correct{border-color:color-mix(in srgb,var(--ok) 45%,transparent)}
+.q.incorrect{border-color:color-mix(in srgb,var(--min-line) 45%,transparent)}
+.q-meta{display:flex;align-items:center;gap:10px;font:500 11.5px/1 var(--mono);color:var(--muted);letter-spacing:.03em}
+.q-num{color:var(--accent)}
+.q-status{margin-left:auto;font-weight:600}
+.q.correct .q-status{color:var(--ok)}.q.correct .q-status::before{content:"Correct"}
+.q.incorrect .q-status{color:var(--min-line)}.q.incorrect .q-status::before{content:"Incorrect"}
+.q-text{font-weight:500;font-size:16px;margin:10px 0 14px}
+.opts{display:grid;gap:8px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover:not(:disabled){border-color:var(--line-2);background:var(--surface-2)}
+.opt:disabled{cursor:default}
+.opt-l{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:7px;border:1px solid var(--line-2);font:500 12px/1 var(--mono);color:var(--ink-2)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.right .opt-l{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.wrong{border-color:var(--min-line);background:color-mix(in srgb,var(--min-line) 9%,transparent)}
+.opt.wrong .opt-l{background:var(--min-line);border-color:var(--min-line);color:#fff}
+.opt.dim{opacity:.55}
+.explain{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:14.5px;color:var(--ink-2)}
+.explain::before{content:"Explanation";display:block;font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.btn{font:500 13.5px/1 var(--font);color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:9px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){background:var(--surface-2)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary:hover:not(:disabled){background:var(--ink-2);border-color:var(--ink-2)}
+.btn.ghost{border-color:var(--line)}
+.btn.ok.sel{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.no.sel{background:var(--min-line);border-color:var(--min-line);color:#fff}
+.q-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.q-msg{font-size:14px;color:var(--ink-2);margin-left:4px}
+.q-msg.good{color:var(--ok);font-weight:500}.q-msg.bad{color:var(--min-line);font-weight:500}
+.q textarea{width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+.q textarea:focus,.tin:focus{outline:2px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:1px;border-color:var(--accent)}
+.model{margin-top:12px;padding:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--ok) 25%,transparent);background:var(--ok-soft);font-size:14.5px}
+.model-l{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ok);margin-bottom:8px}
+.selfmark{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--ok) 20%,transparent)}
+.selfmark span{color:var(--ink-2);font-size:13.5px;margin-right:4px}
+.tv-fig{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface-2);background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px}
+.tv-fig .scroll{overflow-x:auto}
+.tv-fig svg{display:block;width:100%;height:auto;margin:0 auto}
+.tin{display:block;margin:0;width:36px;height:22px;box-sizing:border-box;-webkit-appearance:none;appearance:none;text-align:center;font:600 13px/1 var(--mono);color:var(--ink);background:var(--surface);border:1.5px solid var(--accent);border-radius:6px;padding:0}
+.tin.good{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.tin.bad{border-color:var(--min-line);background:color-mix(in srgb,var(--min-line) 12%,var(--surface));color:var(--min-line)}
+g.pick,g.ordn{cursor:pointer}
+g.pick:hover rect,g.ordn:hover rect,g.ordn:hover circle{stroke:var(--accent);stroke-width:2.4}
+g.pick.sel rect{fill:color-mix(in srgb,var(--accent-2) 14%,var(--surface));stroke:var(--accent-2);stroke-width:2.4;stroke-dasharray:4 3}
+g.pick.sel text.nval{fill:var(--muted);text-decoration:line-through}
+g.pick.good rect{stroke:var(--ok)!important;stroke-width:2.6}
+g.pick.bad rect{stroke:var(--min-line)!important;stroke-width:2.6;stroke-dasharray:none}
+g:focus{outline:none}g:focus-visible rect,g:focus-visible circle{stroke:var(--accent);stroke-width:3}
+g.ordn.chosen rect,g.ordn.chosen circle{fill:var(--accent-soft);stroke:var(--accent)}
+.obadge{fill:var(--accent)}.obadge-t{font:600 10px/1 var(--mono)!important;fill:#fff;text-anchor:middle}
+g.ordn.bad rect,g.ordn.bad circle{stroke:var(--min-line);stroke-width:2.6}
+.ord-body .tv-fig{margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:99px;padding:8px 14px;cursor:pointer;transition:all .15s}
+.chip:hover:not(:disabled){border-color:var(--accent)}
+.chip.chosen{background:var(--accent-soft);border-color:var(--accent);padding-left:38px}
+.chip.chosen::before{content:attr(data-n);position:absolute;left:8px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font:600 11px/22px var(--mono);text-align:center}
+.chip.bad{border-color:var(--min-line);background:color-mix(in srgb,var(--min-line) 10%,transparent)}
+.chip.bad::before{background:var(--min-line)}
+.ord-trail{min-height:22px;margin-top:12px;font:500 13.5px/1.6 var(--mono);color:var(--ink-2)}
+.ord-trail:empty::before{content:"Your order appears here";color:var(--muted);font-family:var(--font);font-weight:400}
+.legend-inline{margin:10px 0 0;text-align:center;font:400 12px/1.5 var(--mono);color:var(--muted)}
+@media print{.quizbar,.q-actions,.selfmark{display:none}.q .explain,.q .model{display:block!important}}
+
+/* ===== Warm editorial theme (ivory / slate, serif body, sans headings) ===== */
+body{font:400 17.5px/1.65 var(--serif);letter-spacing:-.003em;font-feature-settings:normal}
+h1,h2,h3,h4,nav.toc,.crumbs,.eyebrow,table,.btn,.q-meta,.glance b,figcaption,.pager,footer,.pill,dl.terms dt,
+.slides,.callout>strong:first-child,.tag-beyond,.timeline .yrs,.quizbar,.chip,.ord-trail,.q-msg,.theme-switch,.model-l,.explain::before,.selfmark span{font-family:var(--font)}
+h1{font-weight:700;letter-spacing:-.02em;line-height:1.1;font-size:clamp(28px,4vw,42px)}
+section>h2{font-weight:600;letter-spacing:-.02em;font-size:30px}
+h3{font-weight:600;font-size:20px;letter-spacing:-.01em}
+h4{font-weight:600}
+.meta{font-family:var(--serif);font-size:19px;line-height:1.5;color:var(--ink-2);max-width:720px}
+a{color:var(--ink-2);text-decoration:underline;text-decoration-color:var(--line-2);text-decoration-thickness:1px;text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
+a:hover{color:var(--ink);text-decoration-color:var(--ink)}
+nav.toc a,.pager a,a.wk,.crumbs a,.to-top{text-decoration:none}
+.eyebrow{background:transparent;border:0;padding:0;font:500 13px/1 var(--font);letter-spacing:0;color:var(--ink-2)}
+.eyebrow::before{width:8px;height:8px;border-radius:2px;background:var(--accent)}
+.crumbs{font-family:var(--font);font-size:14px}
+header.top .wrap{padding-top:64px;padding-bottom:52px}
+section>h2 .num{font:500 13px/1 var(--font);color:var(--accent);letter-spacing:0}
+.slides{font:400 13px/1 var(--font)}
+nav.toc h2{font:600 12px/1 var(--font);letter-spacing:.04em;color:var(--ink-2)}
+nav.toc a{font-size:14px}
+nav.toc a.active{border-left-color:var(--accent)}
+table{font-size:15px}
+th{font-weight:600;color:var(--ink);background:var(--surface-2)}
+.table-wrap,.callout,.card,figure.diagram,details.qa,.q,.pager a,.glance,pre,.quizbar,.tv-fig{border-radius:var(--radius)}
+figure.diagram,.tv-fig{background-image:none;background-color:var(--surface-2);border-color:var(--line)}
+figcaption{font-size:14px}
+.callout{background:var(--surface-2);border-color:var(--line)}
+.callout>strong:first-child{font:600 12px/1 var(--font);letter-spacing:.04em}
+.callout.beyond{background:var(--warn-soft)} .callout.key{background:var(--ok-soft)} .callout.note{background:var(--accent-2-soft)}
+.callout.note>strong:first-child{color:var(--accent-2)}
+.tag-beyond{font:600 10.5px/1 var(--font);letter-spacing:.04em}
+.glance{background:var(--line)} .glance div{background:var(--bg);font-size:15.5px}
+.glance b{font:600 12px/1 var(--font);letter-spacing:.04em;color:var(--accent)}
+.card{background:transparent}
+.pill{background:transparent}
+code{background:var(--surface-2);border-color:var(--line);font-size:.82em}
+pre{background:var(--code)}
+.btn{border-radius:8px}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.opt{font-family:var(--serif);font-size:16.5px;background:transparent;border-radius:8px}
+.opt-l{font-family:var(--font);border-radius:6px}
+.opt.wrong{border-color:var(--err);background:color-mix(in srgb,var(--err) 9%,transparent)}
+.opt.wrong .opt-l{background:var(--err);border-color:var(--err)}
+.q{background:transparent}
+.q.incorrect{border-color:color-mix(in srgb,var(--err) 45%,transparent)}
+.q.incorrect .q-status{color:var(--err)}
+.q-text{font-size:18px;font-weight:500}
+.q-num{color:var(--accent)}
+.btn.no.sel{background:var(--err);border-color:var(--err)}
+.tin.bad{border-color:var(--err);color:var(--err);background:color-mix(in srgb,var(--err) 12%,var(--surface))}
+.q-msg.bad{color:var(--err)}
+g.pick.bad rect,g.ordn.bad rect,g.ordn.bad circle{stroke:var(--err)!important}
+.chip.bad{border-color:var(--err)} .chip.bad::before{background:var(--err)}
+.quizbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
+.qb-score{font-family:var(--font)}
+details.qa{background:transparent}
+.timeline .yrs{font-weight:600;background:transparent;border-color:var(--line-2)}
+.theme-switch{background:transparent;border-color:var(--line-2)}
+.theme-switch button[aria-pressed="true"]{background:var(--ink);color:var(--bg);box-shadow:none}
+footer{font-size:14px;color:var(--ink-2)}
+
+/* ===== Clean layout: one reading column, breadcrumbs, collapsible sections ===== */
+header.top{border-bottom:0}
+header.top .wrap{padding-bottom:0}
+.layout{grid-template-columns:minmax(0,1fr)!important;max-width:860px;gap:0;padding-top:0}
+header.top .wrap,footer .wrap{max-width:860px}
+.breadcrumbs ol{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px;font:400 14px/1.4 var(--font);color:var(--ink-2)}
+.breadcrumbs li{display:inline-flex;align-items:center;gap:4px;margin:0}
+.breadcrumbs a{color:var(--ink-2);text-decoration:none}
+.breadcrumbs a:hover{color:var(--ink);text-decoration:underline}
+.breadcrumbs [aria-current]{color:var(--ink)}
+.bc-sep{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+section{padding:0;border-bottom:1px solid var(--line)}
+details.sec>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;padding:26px 0;user-select:none}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary h2{margin:0}
+details.sec>summary:hover h2{color:var(--ink-2)}
+details.sec>summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
+.sec-chev{flex:none;width:10px;height:10px;border-right:1.6px solid var(--ink-2);border-bottom:1.6px solid var(--ink-2);transform:rotate(45deg);margin:-6px 6px 0 0;transition:transform .2s}
+details.sec[open] .sec-chev{transform:rotate(-135deg);margin-top:4px}
+.sec-body{padding:0 0 34px}
+.sec-body>*:first-child{margin-top:0}
+section>details>summary h2{font-size:28px;font-weight:600;letter-spacing:-.02em}
+.foot-meta{color:var(--ink);margin:0 0 6px}
+footer p{margin:0 0 6px}
+@media (max-width:600px){details.sec>summary{padding:20px 0}section>details>summary h2{font-size:22px}.sec-body{padding-bottom:26px}}
+@media print{.sec-chev{display:none}}
+
+footer{padding-left:0!important;padding-right:0!important}
+
+
+/* ===== Highlight boxes: four fixed types ===== */
+.callout.key{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 22%,transparent)}
+.callout.key>strong:first-child{color:var(--ok)}
+.callout.def{background:var(--accent-2-soft);border-color:color-mix(in srgb,var(--accent-2) 22%,transparent)}
+.callout.def>strong:first-child{color:var(--accent-2)}
+.callout.warn{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 25%,transparent)}
+.callout.warn>strong:first-child{color:var(--accent)}
+.callout.good{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 22%,transparent)}
+.callout.good>strong:first-child{color:var(--warn)}
+
+
+/* timeline: dots drawn as vector shapes so they stay perfectly round at any display scaling,
+   and centred on the line (dot centre and line centre both at 6.5px) */
+.timeline::before{left:6px;width:1px}
+.timeline>li::before,.timeline>li::after{content:"";position:absolute;box-sizing:border-box;border:0;border-radius:0;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.timeline>li::after{left:0;top:9px;width:13px;height:13px;background:var(--bg);-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E");z-index:1}
+.timeline>li::before{left:0;top:9px;width:13px;height:13px;background:var(--accent);-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='11' fill='none' stroke='black' stroke-width='4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='11' fill='none' stroke='black' stroke-width='4'/%3E%3C/svg%3E");z-index:2}
+.timeline>li.winter::before{background:var(--min-line);-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E")}
+
+/* ===== Contents: collapsible on small screens ===== */
+nav.toc details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+nav.toc details>summary::-webkit-details-marker{display:none}
+nav.toc details>summary h2{margin:0}
+@media (min-width:1000px){nav.toc details>summary{cursor:default;margin-bottom:14px}.toc-chev{display:none}}
+@media (max-width:999px){
+  nav.toc{padding-top:20px}
+  nav.toc details{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2)}
+  nav.toc details>summary{padding:14px 16px;min-height:48px}
+  nav.toc details[open]>summary{border-bottom:1px solid var(--line)}
+  nav.toc ol{border-left:0;padding:8px 6px 10px}
+  nav.toc a{padding:9px 10px;border-left:0;border-radius:6px;margin-left:0}
+  nav.toc a.active{background:var(--accent-soft)}
+  .toc-chev{width:9px;height:9px;border-right:1.5px solid var(--ink-2);border-bottom:1.5px solid var(--ink-2);transform:rotate(45deg);transition:transform .2s;margin:-4px 4px 0 0}
+  nav.toc details[open] .toc-chev{transform:rotate(-135deg);margin-top:4px}
+}
+
+/* ===== Swipe hint for wide content ===== */
+.is-overflowing{background-image:linear-gradient(to left,color-mix(in srgb,var(--ink) 10%,transparent),transparent 16px);
+  background-repeat:no-repeat;background-position:right top;background-size:16px 100%}
+figure.diagram:has(.scroll.is-overflowing:not(.scrolled)) figcaption::before,
+.tv-fig:has(.scroll.is-overflowing:not(.scrolled))::after,
+.table-wrap.is-overflowing:not(.scrolled)+*::before{content:none}
+figure.diagram:has(.scroll.is-overflowing:not(.scrolled)) figcaption::before{content:"Swipe sideways to see the whole diagram";display:block;font:500 12px/1 var(--font);color:var(--accent);margin-bottom:8px}
+.tv-fig:has(.scroll.is-overflowing:not(.scrolled))::after{content:"Swipe sideways to see the whole tree";display:block;text-align:center;font:500 12px/1 var(--font);color:var(--accent);margin-top:8px}
+
+/* ===== Back to top ===== */
+.to-top{position:fixed;right:16px;bottom:16px;z-index:20;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;
+  background:var(--ink);color:var(--bg);font:600 18px/1 var(--font);box-shadow:0 6px 20px -6px rgba(0,0,0,.35);
+  opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .2s,transform .2s}
+.to-top.show{opacity:1;transform:none;pointer-events:auto}
+.to-top:hover{color:var(--bg)}
+@media (min-width:1000px){.to-top{right:28px;bottom:28px}}
+@media print{.to-top{display:none}}
+
+/* ===== Phones ===== */
+@media (max-width:600px){
+  body{font-size:16.5px;line-height:1.62}
+  header.top .wrap{padding-top:28px;padding-bottom:26px}
+  .crumbs{margin-bottom:16px}
+  h1{font-size:clamp(26px,7.5vw,30px);margin:12px 0 10px}
+  .meta{font-size:16.5px}
+  .layout{gap:8px;padding-bottom:48px}
+  section{padding:30px 0 26px}
+  section>h2{font-size:24px}
+  h3{font-size:18px;margin-top:26px}
+  .glance{grid-template-columns:1fr 1fr}
+  .glance div{padding:12px 14px;font-size:14.5px}
+  .cols{grid-template-columns:1fr}
+  table{font-size:14px}
+  th,td{padding:8px 10px}
+  pre{font-size:12.5px;padding:14px}
+  figure.diagram{padding:12px 8px}
+  figcaption{font-size:13px}
+  .callout{padding:12px 14px}
+  .q{padding:16px 14px}
+  .q-text{font-size:16.5px}
+  .opt{font-size:15.5px;padding:11px 12px;min-height:48px}
+  .q-actions .btn{flex:1 1 auto;min-height:44px}
+  .tv-fig{padding:8px}
+  .qb-row{gap:10px 14px}
+  details.qa summary{padding:13px 14px 13px 44px}
+  details.qa summary::before{left:14px}
+  details.qa .ans{padding:12px 14px 14px}
+  .pager a{padding:14px 16px}
+  .timeline>li{padding-left:24px}
+  .foot-row{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:380px){.glance{grid-template-columns:1fr}}
+
+/* ===== Site menu ===== */
+:root{--menu-ink:#cfcdc3;--menu-ink-hover:#a8a69d}
+:root[data-theme="dark"]{--menu-ink:#4a4945;--menu-ink-hover:#73726c}
+@media (prefers-color-scheme: dark){:root[data-theme="system"]{--menu-ink:#4a4945;--menu-ink-hover:#73726c}}
+.menu{position:fixed;top:14px;left:14px;z-index:40}
+.menu-btn{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;border:1px solid var(--menu-ink);background:var(--bg);color:var(--menu-ink);cursor:pointer;transition:color .15s,background .15s,border-color .15s}
+.menu-btn:hover,.menu-btn[aria-expanded="true"]{color:var(--menu-ink-hover);border-color:var(--menu-ink-hover)}
+.menu-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.menu-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;fill:none}
+.menu-panel{position:absolute;top:48px;left:0;width:min(320px,calc(100vw - 28px));background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 12px 32px -12px rgba(20,20,19,.22);padding:6px;font-family:var(--font);
+  opacity:0;transform:translateY(-4px);pointer-events:none;visibility:hidden;transition:opacity .15s,transform .15s,visibility 0s .15s}
+.menu.open .menu-panel{opacity:1;transform:none;pointer-events:auto;visibility:visible;transition:opacity .15s,transform .15s}
+.menu-sec{padding:4px 0}
+.menu-sec+.menu-sec{border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
+.menu-label{display:block;font:500 12px/1 var(--font);color:var(--muted);padding:8px 10px 6px}
+.menu-nav{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.menu-nav li{margin:0}
+.menu-nav a{display:block;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14.5px;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-nav a:hover{background:var(--surface-2);text-decoration:none;color:var(--ink)}
+.menu-nav a[aria-current="page"]{background:var(--surface-2);font-weight:600}
+.menu-nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.menu-theme{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin:2px 4px 4px;padding:3px;border-radius:9px;background:var(--surface-2)}
+.menu-theme button{font:500 13.5px/1 var(--font);color:var(--ink-2);background:transparent;border:0;border-radius:7px;padding:9px 0;cursor:pointer;transition:background .15s,color .15s}
+.menu-theme button:hover{color:var(--ink)}
+.menu-theme button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(20,20,19,.12)}
+.menu-theme button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* keep page content clear of the button when the margin is narrow */
+@media (max-width:959px){header.top .wrap{padding-top:72px!important}}
+@media print{.menu{display:none}}
+</style>
+</head>
+<body>
+<div class="menu"><button type="button" class="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="site-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="menu-panel" id="site-menu"><div class="menu-sec"><span class="menu-label">Pages</span><ul class="menu-nav"><li><a href="../index.html" title="Home">Home</a></li><li><a href="../Week%201/Week%201%20-%20Introduction%20to%20AI.html" title="Week 1 – Introduction to artificial intelligence" aria-current="page">Week 1 – Introduction to artificial intelligence</a></li><li><a href="../Week%202/Week%202%20-%20Search.html" title="Week 2 – Uninformed and informed search">Week 2 – Uninformed and informed search</a></li><li><a href="../Week%203/Week%203%20-%20Adversarial%20Games.html" title="Week 3 – Adversarial search and games">Week 3 – Adversarial search and games</a></li></ul></div><div class="menu-sec"><span class="menu-label">Theme</span><div class="menu-theme" role="group" aria-label="Theme"><button type="button" data-theme-opt="light" aria-pressed="true">Light</button><button type="button" data-theme-opt="dark" aria-pressed="false">Dark</button><button type="button" data-theme-opt="system" aria-pressed="false">System</button></div></div></div></div><script>
+(function(){
+var menu=document.querySelector('.menu'); if(!menu) return;
+var btn=menu.querySelector('.menu-btn'), panel=menu.querySelector('.menu-panel');
+function setOpen(o){menu.classList.toggle('open',o);btn.setAttribute('aria-expanded',String(o));if(o){var f=panel.querySelector('a,button');f&&f.focus();}}
+btn.addEventListener('click',function(e){e.stopPropagation();setOpen(!menu.classList.contains('open'))});
+document.addEventListener('click',function(e){if(!menu.contains(e.target))setOpen(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.classList.contains('open')){setOpen(false);btn.focus();}});
+var K='applied-ai-theme',root=document.documentElement,opts=menu.querySelectorAll('[data-theme-opt]');
+function get(){try{var t=localStorage.getItem(K);return t==='dark'||t==='system'?t:'light'}catch(e){return 'light'}}
+function apply(t){if(t==='light')root.removeAttribute('data-theme');else root.setAttribute('data-theme',t);
+  opts.forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-theme-opt')===t))});}
+opts.forEach(function(b){b.addEventListener('click',function(){var t=b.getAttribute('data-theme-opt');
+  try{if(t==='light')localStorage.removeItem(K);else localStorage.setItem(K,t)}catch(e){}apply(t)})});
+apply(get());
+})();
+</script>
+<header class="top"><div class="wrap">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Applied AI</a></li><li><svg class="bc-sep" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg><span aria-current="page">Week 1</span></li></ol></nav>
+  <h1>Introduction to artificial intelligence</h1>
+</div></header>
+<div class="wrap layout">
+  <main>
+<section id="overview"><details class="sec" open><summary><h2>Overview</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>What intelligence and artificial intelligence mean, how AI developed through periods of excitement and disappointment, where it stands today, how industry uses it, and what people hope for and worry about.</p>
+</div></details></section>
+<section id="what-is-ai"><details class="sec" open><summary><h2>What is artificial intelligence?</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<h3>How the main areas fit together</h3>
+<figure class="diagram"><div class="scroll"><svg style="min-width:320px" viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" role="img">
+<ellipse class="set" cx="320" cy="165" rx="305" ry="152" style="fill:var(--surface);stroke:var(--ink-2)"/>
+<ellipse class="set" cx="375" cy="190" rx="235" ry="112" style="fill:var(--max);stroke:var(--max-line)"/>
+<ellipse class="set" cx="455" cy="210" rx="150" ry="74" style="fill:var(--leaf);stroke:var(--leaf-line)"/>
+<ellipse class="set" cx="515" cy="222" rx="72" ry="38" style="fill:var(--min);stroke:var(--min-line)"/>
+<text x="320" y="42" text-anchor="middle" style="font-size:19px;font-weight:700">Artificial intelligence</text>
+<text x="120" y="135" text-anchor="middle" class="small" style="font-size:13px">Symbolic AI</text>
+<text x="120" y="152" text-anchor="middle" class="small">search, logic, planning</text>
+<text x="120" y="168" text-anchor="middle" class="small">rules and expert systems</text>
+<text x="330" y="108" text-anchor="middle" style="font-size:16px;font-weight:600">Machine learning</text>
+<text x="330" y="126" text-anchor="middle" class="small">learns patterns from data</text>
+<text x="420" y="172" text-anchor="middle" style="font-size:15px;font-weight:600">Deep learning</text>
+<text x="420" y="189" text-anchor="middle" class="small">neural networks with many layers</text>
+<text x="515" y="219" text-anchor="middle" style="font-size:12.5px;font-weight:700">Large language</text><text x="515" y="235" text-anchor="middle" style="font-size:12.5px;font-weight:700">models</text>
+</svg></div><figcaption>Each area sits inside a wider one.</figcaption></figure>
+<p>Artificial intelligence is the widest term. <strong>Machine learning</strong> is the part of AI where computers learn patterns from data instead of following rules written by hand. <strong>Deep learning</strong> is the part of machine learning that uses neural networks with many layers. <strong>Large language models</strong>, such as the ones behind ChatGPT, are one kind of deep learning model.</p>
+<p>The part of AI outside machine learning is the older <strong>symbolic</strong> approach. It works with explicit rules, logic and search. Machine learning, by contrast, is <strong>statistical</strong>: it deals in probabilities learned from examples.</p>
+
+<h3>Definitions to know</h3>
+<dl class="terms">
+  <dt>Intelligence</dt><dd>“The ability to learn and perform suitable techniques to solve problems and achieve goals, appropriate to the context, in an uncertain, ever-varying world.” (Professor Chris Manning, Stanford)</dd>
+  <dt>Artificial intelligence</dt><dd>The term was coined by <strong>John McCarthy in 1955</strong>. He defined it as “the science and engineering of making intelligent machines”.</dd>
+</dl>
+
+<div class="callout key"><strong>Key point</strong>McCarthy kept his definition deliberately open, to encourage people to explore. That helped the field grow, but it also led to promises that could not be kept. The same tension shows up in today's arguments about what counts as “artificial general intelligence”, meaning AI that matches people across every kind of task.</div>
+
+<div class="callout good"><strong>Good to know</strong><b>The Lighthill report.</b> This 1973 report was written for the UK government's science research council. It argued that AI had failed to deliver on its big promises, mainly because real problems involve far too many possibilities to search through. UK funding for AI was cut sharply afterwards, and the report is often linked with the start of the first AI winter.</div>
+
+<dl class="terms">
+  <dt>Machine learning</dt><dd>Tom Mitchell's definition: “A computer program is said to learn from experience <b>E</b> with respect to some class of tasks <b>T</b> and performance measure <b>P</b>, if its performance at tasks in T, as measured by P, improves with experience E.”</dd>
+</dl>
+
+<div class="callout good"><strong>Good to know</strong><b>Mitchell's definition in practice.</b> For a spam filter, the task <b>T</b> is sorting emails into spam and not spam, the performance measure <b>P</b> is the percentage sorted correctly, and the experience <b>E</b> is a collection of emails that people have already labelled.</div>
+
+
+
+</div></details></section>
+<section id="history"><details class="sec" open><summary><h2>A short history of AI</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<ul class="timeline">
+  <li><span class="yrs">1940–1950</span><span class="era">The early days</span>
+    <ul><li><b>1943:</b> Warren McCulloch and Walter Pitts describe the brain as a circuit of simple on/off units. This is the first model of an artificial neuron.</li>
+    <li><b>1950:</b> Alan Turing publishes “Computing Machinery and Intelligence”, which introduces the Turing Test.</li></ul></li>
+  <li><span class="yrs">1950–1970</span><span class="era">Early excitement</span>
+    <ul><li><b>1950s:</b> the first AI programs appear, including Arthur Samuel's checkers player, Newell and Simon's <em>Logic Theorist</em> and Gelernter's geometry program.</li>
+    <li><b>1956:</b> a workshop at Dartmouth College adopts the name “artificial intelligence”.</li>
+    <li><b>1965:</b> John Alan Robinson publishes a complete method for logical reasoning.</li></ul></li>
+  <li><span class="yrs">1970–1990</span><span class="era">Knowledge-based systems</span>
+    <ul><li><b>1969–1979:</b> the first systems built around large collections of expert knowledge.</li>
+    <li><b>1980–1988:</b> the expert systems industry booms.</li></ul></li>
+  <li class="winter"><span class="yrs">1988–1993</span><span class="era">The expert systems industry collapses: an “AI winter”</span></li>
+  <li><span class="yrs">1990–2012</span><span class="era">Statistics and specialist areas</span>
+    <ul><li>Probability comes back, with a focus on handling uncertainty.</li>
+    <li>Each area of AI becomes much more technically deep.</li>
+    <li>Work on agents and learning systems grows, and people talk of an “AI spring”.</li></ul></li>
+  <li><span class="yrs">2012–today</span><span class="era">Excitement again</span>
+    <ul><li>Large amounts of data, powerful computers and neural networks come together.</li>
+    <li>Separate areas of AI start to merge again.</li>
+    <li>AI is used across many industries.</li></ul></li>
+</ul>
+
+<h3>Booms and winters</h3>
+<figure class="diagram"><div class="scroll"><svg style="min-width:320px" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" role="img"><line class="axis" x1="60" y1="250" x2="670" y2="250"/><line class="axis" x1="60" y1="250" x2="60" y2="20"/><text class="small" x="54" y="30" text-anchor="end">Interest</text><text class="small" x="668" y="270" text-anchor="end">Time</text><line class="guide" x1="60" y1="250" x2="60" y2="246"/><text class="small" x="60" y="268" text-anchor="middle">1950</text><line class="guide" x1="111" y1="250" x2="111" y2="204"/><text class="small" x="111" y="268" text-anchor="middle">1956</text><line class="guide" x1="266" y1="250" x2="266" y2="132"/><text class="small" x="266" y="268" text-anchor="middle">1974</text><line class="guide" x1="317" y1="250" x2="317" y2="174"/><text class="small" x="317" y="268" text-anchor="middle">1980</text><line class="guide" x1="377" y1="250" x2="377" y2="82"/><text class="small" x="377" y="268" text-anchor="middle">1987</text><line class="guide" x1="429" y1="250" x2="429" y2="145"/><text class="small" x="429" y="268" text-anchor="middle">1993</text><text class="small" x="591" y="268" text-anchor="middle">2012</text><path class="curve" d="M60.0,245.8 C68.6,238.8 88.6,217.8 111.4,203.8 C134.3,189.8 171.4,173.7 197.1,161.8 C222.9,149.9 245.7,130.3 265.7,132.4 C285.7,134.5 298.6,182.8 317.1,174.4 C335.7,166.0 358.6,86.9 377.1,82.0 C395.7,77.1 402.9,138.7 428.6,145.0 C454.3,151.3 492.9,138.7 531.4,119.8 C570.0,100.9 638.6,46.3 660.0,31.6"/><circle cx="111" cy="204" r="4" style="fill:var(--accent)"/><text x="111" y="192" text-anchor="middle" style="font-size:12.5px;font-weight:600">Birth of AI</text><circle cx="266" cy="132" r="4" style="fill:var(--accent)"/><text x="266" y="120" text-anchor="middle" style="font-size:12.5px;font-weight:600">Peak of excitement</text><circle cx="317" cy="174" r="4" style="fill:var(--accent)"/><text x="317" y="192" text-anchor="middle" style="font-size:12.5px;font-weight:600">First AI winter</text><circle cx="377" cy="82" r="4" style="fill:var(--accent)"/><text x="377" y="70" text-anchor="middle" style="font-size:12.5px;font-weight:600">Expert systems</text><circle cx="429" cy="145" r="4" style="fill:var(--accent)"/><text x="429" y="163" text-anchor="middle" style="font-size:12.5px;font-weight:600">Second AI winter</text><text x="540" y="65" text-anchor="middle" style="font-size:12.5px;font-weight:600">Explosive growth</text></svg></div><figcaption>AI has often been called “the next big thing”. Each wave of excitement has been followed by disappointment, known as an AI winter.</figcaption></figure>
+<div class="table-wrap"><table>
+<tr><th>When</th><th>What happened</th></tr>
+<tr><td>1950s–1960s</td><td>The first boom, focused on reasoning. Early prototype AI systems are built.</td></tr>
+<tr><td>1970s</td><td>The first AI winter</td></tr>
+<tr><td>1980s</td><td>The second boom, focused on representing knowledge. Expert systems copy the decisions of human experts.</td></tr>
+<tr><td>Late 1980s to early 1990s</td><td>The second AI winter</td></tr>
+<tr><td>1997</td><td>IBM's Deep Blue beats the world chess champion Garry Kasparov</td></tr>
+<tr><td>2006</td><td>Researchers at the University of Toronto revive deep learning</td></tr>
+<tr><td>2011</td><td>IBM's Watson wins the quiz show <em>Jeopardy!</em></td></tr>
+<tr><td>2016</td><td>A Go program based on deep learning beats the world's best players</td></tr>
+</table></div>
+
+<h3>AI then and now</h3>
+<p>Comparing the most common words in AI writing from 1986–1990 with those from 2020 onwards shows how the field has changed. The data comes from <a href="https://aitopics.org/search#">aitopics.org</a>. In the late 1980s the most common terms included artificial intelligence, neural network, machine learning, expert system, knowledge, representation, algorithm and logic programming. From 2020 onwards they include machine learning, deep learning, natural language, dataset, algorithm, large language model, reinforcement learning, transformer and chatbot.</p>
+
+<div class="callout key"><strong>Key point</strong><b>Two traditions.</b> <b>Symbolic AI</b> works with explicit symbols, rules and logic. Examples are the Logic Theorist, expert systems and search. <b>Connectionist AI</b> learns from data using networks of simple connected units, from McCulloch and Pitts' neuron to today's deep learning. <b>Neurosymbolic AI</b> tries to combine the two.</div>
+</div></details></section>
+<section id="fields"><details class="sec" open><summary><h2>The main areas of AI</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<div class="table-wrap"><table>
+<tr><th>Area</th><th>Techniques</th><th>Where it is used</th></tr>
+<tr><td><strong>Problem solving and search</strong></td><td>Uninformed and informed search, searching against an opponent, solving problems with constraints</td><td>Route finding, game playing, finding the best option</td></tr>
+<tr><td><strong>Knowledge and reasoning</strong></td><td>Logic, ontologies, semantic networks, reasoning with probabilities</td><td>Expert systems, understanding language, supporting decisions</td></tr>
+<tr><td><strong>Machine learning</strong></td><td>Supervised, unsupervised and reinforcement learning, neural networks</td><td>Classification, prediction, pattern recognition</td></tr>
+<tr><td><strong>Natural language processing</strong></td><td>Parsing, machine translation, speech recognition, sentiment analysis</td><td>Chatbots, voice assistants, language models</td></tr>
+<tr><td><strong>Robotics and perception</strong></td><td>Computer vision, motion planning, combining sensor data, control theory</td><td>Self-driving vehicles, factory robots, assistive technology</td></tr>
+<tr><td><strong>Planning and decision making</strong></td><td>Classical and hierarchical planning, Markov decision processes, game theory</td><td>Scheduling, logistics, strategy</td></tr>
+<tr><td><strong>Uncertainty and probability</strong></td><td>Bayesian networks, Markov models, decision theory</td><td>Diagnosis, risk assessment, predicting when machines need repair</td></tr>
+<tr><td><strong>Ethics and safety</strong></td><td>Fairness, transparency, accountability</td><td>Responsible use of AI, its effect on society, regulation</td></tr>
+<tr><td><strong>Philosophy and the future</strong></td><td>Strong and weak AI, artificial general intelligence</td><td>The challenges of building AI that matches people at everything</td></tr>
+</table></div>
+</div></details></section>
+<section id="recent"><details class="sec" open><summary><h2>Recent developments</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<h3>Companies to watch</h3>
+<p>OpenAI, Anthropic, Hugging Face, Google DeepMind, Tesla and xAI, Microsoft, Meta, Amazon and IBM.</p>
+<p><strong>Google DeepMind</strong> was formed in April 2023, when Google merged its two main research groups, Google Brain and DeepMind. One recent example of its work is Genie 3, which generates interactive virtual worlds.</p>
+
+<div class="cols">
+<div class="card"><h4>Chatbots and language models</h4>
+<ul><li>ChatGPT, Google Gemini, Perplexity and many open-source models.</li>
+<li>Many can now work with images and sound as well as text.</li>
+<li>They raise open questions: could they be conscious, and what are their limits?</li></ul></div>
+<div class="card"><h4>Writing code from plain English</h4>
+<ul><li>Software development involves much more than writing code, such as working out what users need, designing systems and testing them.</li>
+<li>These tools mostly make developers more productive rather than replacing them.</li>
+<li>They are built into coding tools such as GitHub Copilot and Cursor.</li>
+<li>Competition is intense: Claude Code, OpenAI Codex and Copilot.</li></ul></div>
+<div class="card"><h4>Images, video and music from plain English</h4>
+<ul><li>OpenAI's DALL·E 3.</li><li>Stable Diffusion, which is open source.</li>
+<li>Google DeepMind's Veo for video, Lyria for music and Nano Banana for editing images.</li></ul></div>
+<div class="card"><h4>Games</h4>
+<ul><li>AlphaZero plays chess, shogi and Go.</li><li>DeepMind's systems play 57 Atari games better than people.</li>
+<li>AI beats top human players at StarCraft II.</li></ul></div>
+<div class="card"><h4>Robots</h4>
+<ul><li>Humanoid robots such as the Unitree G1, and the latest work from Boston Dynamics.</li></ul></div>
+</div>
+
+<h3>Why AI is advancing so fast</h3>
+<p>Two reasons stand out:</p>
+<ul>
+  <li><strong>Data:</strong> there is a huge amount of text, images and video to learn from.</li>
+  <li><strong>Computing power:</strong> specialised chips and very large data centres, with more being built.</li>
+</ul>
+<div class="callout good"><strong>Good to know</strong>Two other reasons are often given. One is better methods, such as the Transformer design for neural networks published in 2017. The other is openness: free software, shared models and research papers published freely online.</div>
+</div></details></section>
+<section id="industry"><details class="sec" open><summary><h2>AI in industry</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<div class="table-wrap"><table>
+<tr><th>Industry</th><th>How AI is used</th></tr>
+<tr><td>Healthcare</td><td>Reading medical images to help diagnosis</td></tr>
+<tr><td>Customer services</td><td>Chatbots and automated bookings</td></tr>
+<tr><td>Energy</td><td>Monitoring supply and predicting demand</td></tr>
+<tr><td>Finance</td><td>Spotting fraud and automated trading</td></tr>
+<tr><td>Life sciences</td><td>Finding new drugs and predicting how diseases spread</td></tr>
+<tr><td>Telecoms</td><td>Running networks efficiently and predicting faults</td></tr>
+</table></div>
+<p>The next step is <strong>agentic AI</strong>: systems that plan and carry out tasks on their own, rather than only answering questions.</p>
+</div></details></section>
+<section id="hype"><details class="sec" open><summary><h2>A golden age, or another AI winter?</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>Gartner's “hype cycle” for AI shows how expectations of different AI technologies changed between 2023 and 2025. A hype cycle tracks how expectations of a new technology rise and fall over time. It has five stages: a breakthrough sets things off, expectations peak, disappointment follows, understanding slowly improves, and finally the technology becomes genuinely useful.</p>
+<div class="table-wrap"><table>
+<tr><th>Technology</th><th>2023</th><th>2025</th></tr>
+<tr><td>Generative AI</td><td>At the peak of expectations</td><td>Falling into disappointment</td></tr>
+<tr><td>Foundation models</td><td>At the peak</td><td>Past the peak and falling</td></tr>
+<tr><td>AI agents</td><td>Not shown</td><td>At the peak</td></tr>
+<tr><td>Artificial general intelligence</td><td>Rising towards the peak, more than 10 years away</td><td>Rising towards the peak, more than 10 years away</td></tr>
+<tr><td>Knowledge graphs</td><td>In the disappointment stage</td><td>Recovering, with understanding improving</td></tr>
+<tr><td>Neurosymbolic AI</td><td>Just starting</td><td>Just starting</td></tr>
+</table></div>
+
+<h3>The arguments</h3>
+<ul>
+  <li>There is a lot of hype, but this time results hold up on real problems, not just simplified test cases.</li>
+  <li>Most of the recent success comes from more computing power and more data. Many of the techniques are decades old.</li>
+  <li>AI is always “the next big thing” and so never quite arrives. Elon Musk has promised self-driving cars “next year” for many years. Should we call it “computational intelligence” instead, to calm the hype?</li>
+  <li>Money and marketing can run ahead of the science. PwC estimates that AI could add about $15.7 trillion to the world economy by 2030.</li>
+</ul>
+<div class="callout good"><strong>Good to know</strong><b>A correction.</b> The slides say that Gartner predicts AI will be a $16 trillion industry by 2030. In fact the figure comes from PwC, and it is an estimate of how much AI could add to the world economy, not the size of the AI industry.</div>
+</div></details></section>
+<section id="issues"><details class="sec" open><summary><h2>Concerns and benefits</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<div class="cols">
+<div class="card"><h4>Concerns</h4>
+<ul>
+  <li><b>Responsibility:</b> when AI makes a harmful decision, who is legally and morally responsible?</li>
+  <li><b>Jobs:</b> AI may replace people, including in creative work.</li>
+  <li><b>The singularity:</b> what happens if AI becomes smarter than people? Geoffrey Hinton, Elon Musk, Ray Kurzweil and others have given their views.</li>
+  <li><b>Consciousness:</b> can AI be conscious? Is general AI possible at all, and would it try to take control?</li>
+  <li><b>Mind uploading:</b> could a human mind be copied into a machine?</li>
+  <li><b>Bias:</b> AI trained on past hiring decisions, for example, has favoured men.</li>
+</ul></div>
+<div class="card"><h4>Benefits</h4>
+<ul>
+  <li><b>Insight:</b> AI can help us understand very complex problems, much as AlphaGo showed expert Go players new ideas rather than ruining the game.</li>
+  <li><b>Work people cannot do:</b> machines can work around the clock, raising productivity and quality of life.</li>
+  <li><b>Instant learning:</b> a skill can be copied to another machine at once, where people need years.</li>
+  <li><b>Help for human creativity:</b> AI can be a “bicycle for the mind”.</li>
+  <li><b>War without soldiers:</b> fewer people might be put at risk, although this cuts both ways.</li>
+</ul></div>
+</div>
+</div></details></section>
+<section id="quiz"><details class="sec"><summary><h2>Quiz</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body"><div class="quizbar"><div class="qb-row"><div><b class="qb-score">0</b> correct</div><div class="qb-l"><span class="qb-done">0</span> of 13 answered</div><button type="button" class="btn ghost qb-reset">Start over</button></div><div class="qb-track"><div class="qb-fill"></div></div><div class="qb-final" hidden></div></div><p class="q-intro">Only your first try at each question counts towards your score. You can retry the interactive questions as often as you like. Your progress is saved in this browser.</p><div class="q mcq" id="w1-q1" data-answer="2"><div class="q-meta"><span class="q-num">Question 1</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">Which early program showed that a computer could reason logically?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>ELIZA</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>General Problem Solver</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>Logic Theorist</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>An expert system</span></button></div><div class="explain" hidden>The Logic Theorist, written by Newell and Simon in the 1950s, proved theorems from <em>Principia Mathematica</em>. ELIZA was a chatbot, the General Problem Solver came later, and expert systems belong to the 1980s.</div></div><div class="q mcq" id="w1-q2" data-answer="2"><div class="q-meta"><span class="q-num">Question 2</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">Who came up with the term “artificial intelligence”, and when?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>McCulloch and Pitts, 1943</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>Alan Turing, 1950</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>John McCarthy, 1955</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>Marvin Minsky, 1956</span></button></div><div class="explain" hidden>John McCarthy came up with it in 1955, ahead of the 1956 Dartmouth workshop. He defined it as “the science and engineering of making intelligent machines”.</div></div><div class="q mcq" id="w1-q3" data-answer="1"><div class="q-meta"><span class="q-num">Question 3</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">In Tom Mitchell's definition of learning, what is the performance measure <b>P</b> for a spam filter?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>Sorting emails into spam and not spam</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>The percentage of emails sorted correctly</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>A collection of emails that people have labelled</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>The number of times the filter is trained</span></button></div><div class="explain" hidden>P measures how well the program does. The task T is sorting the emails, and the experience E is the collection of labelled emails.</div></div><div class="q mcq" id="w1-q4" data-answer="2"><div class="q-meta"><span class="q-num">Question 4</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">Which of these correctly shows how the areas fit inside each other?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>AI inside machine learning inside deep learning</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>Machine learning inside deep learning inside AI</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>Deep learning inside machine learning inside AI</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>They are three separate areas</span></button></div><div class="explain" hidden>AI is the widest area, machine learning is part of AI, and deep learning is part of machine learning. Large language models are part of deep learning.</div></div><div class="q mcq" id="w1-q5" data-answer="0"><div class="q-meta"><span class="q-num">Question 5</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">What did McCulloch and Pitts propose in 1943?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>A model of the brain as a circuit of on/off units</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>A complete method for logical reasoning</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>The first chess program</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>The Turing Test</span></button></div><div class="explain" hidden>Their model of an artificial neuron is the starting point of the tradition that leads to today's neural networks.</div></div><div class="q mcq" id="w1-q6" data-answer="0"><div class="q-meta"><span class="q-num">Question 6</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">What caused the AI winter of roughly 1988 to 1993?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>The expert systems industry collapsed</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>Deep Blue lost to Kasparov</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>The Dartmouth workshop was cancelled</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>Neural networks were banned</span></button></div><div class="explain" hidden>Expert systems boomed from 1980 to 1988. They were expensive, broke easily outside their narrow area and had been over-promised, so when the industry collapsed the funding went with it.</div></div><div class="q mcq" id="w1-q7" data-answer="0"><div class="q-meta"><span class="q-num">Question 7</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">What explains most of AI's recent success?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>More data and more computing power</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>A new theory of intelligence</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>Progress in symbolic logic</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>Cheaper robot parts</span></button></div><div class="explain" hidden>Many of the techniques are decades old. What changed is the amount of data available and the computing power to learn from it.</div></div><div class="q mcq" id="w1-q8" data-answer="2"><div class="q-meta"><span class="q-num">Question 8</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">In Gartner's 2025 hype cycle for AI, where is generative AI?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>Settled and genuinely useful</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>At the peak of expectations</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>Falling into disappointment</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>Just starting</span></button></div><div class="explain" hidden>Generative AI was at the peak in 2023 and had fallen into the disappointment stage by 2025. AI agents replaced it at the peak.</div></div><div class="q ord" id="w1-q9" data-seq="mp|tur|dart|rob|exp|win|dbl|big"><div class="q-meta"><span class="q-num">Question 9</span><span class="q-kind">Put in order</span><span class="q-status"></span></div><p class="q-text">Put these events in the order they happened. Click them from earliest to latest.</p><div class="ord-body"><div class="chips"><button type="button" class="chip ordn" data-key="dbl">Deep Blue beats Kasparov</button><button type="button" class="chip ordn" data-key="dart">The Dartmouth workshop names the field</button><button type="button" class="chip ordn" data-key="big">Big data, powerful computers and neural networks come together</button><button type="button" class="chip ordn" data-key="mp">McCulloch and Pitts model the neuron</button><button type="button" class="chip ordn" data-key="exp">The expert systems boom</button><button type="button" class="chip ordn" data-key="tur">Turing publishes “Computing Machinery and Intelligence”</button><button type="button" class="chip ordn" data-key="win">The expert systems industry collapses</button><button type="button" class="chip ordn" data-key="rob">Robinson's method for logical reasoning</button></div></div><div class="ord-trail" aria-live="polite"></div><div class="q-actions"><button type="button" class="btn ghost undo">Undo</button><button type="button" class="btn ghost clear">Start again</button><span class="q-msg"></span></div><div class="explain" hidden>1943 McCulloch and Pitts. 1950 Turing. 1956 Dartmouth. 1965 Robinson. 1980 to 1988 the expert systems boom. 1988 to 1993 the collapse. 1997 Deep Blue. 2012 onwards, big data, powerful computers and neural networks.</div></div><div class="q sa" id="w1-q10"><div class="q-meta"><span class="q-num">Question 10</span><span class="q-kind">Short answer</span><span class="q-status"></span></div><p class="q-text">Explain the difference between <b>symbolic</b> and <b>connectionist</b> AI, with an example of each.</p><textarea rows="3" placeholder="Write your answer here, then compare it with the model answer."></textarea><div class="q-actions"><button type="button" class="btn reveal">Show model answer</button></div><div class="model" hidden><div class="model-l">Model answer</div><p>Symbolic AI stores knowledge as explicit symbols and rules, and reasons with logic or search. Examples are the Logic Theorist and expert systems. Connectionist AI learns from data using networks of simple connected units. Examples are neural networks, deep learning and large language models. Neurosymbolic AI tries to combine the two.</p><div class="selfmark"><span>How did you do?</span><button type="button" class="btn ok" data-m="1">I got it right</button><button type="button" class="btn no" data-m="0">I missed something</button></div></div></div><div class="q sa" id="w1-q11"><div class="q-meta"><span class="q-num">Question 11</span><span class="q-kind">Short answer</span><span class="q-status"></span></div><p class="q-text">What are E, T and P for a program that learns to play chess?</p><textarea rows="3" placeholder="Write your answer here, then compare it with the model answer."></textarea><div class="q-actions"><button type="button" class="btn reveal">Show model answer</button></div><div class="model" hidden><div class="model-l">Model answer</div><p>The task <b>T</b> is playing chess. The performance measure <b>P</b> is the percentage of games won. The experience <b>E</b> is playing practice games, for example against itself.</p><div class="selfmark"><span>How did you do?</span><button type="button" class="btn ok" data-m="1">I got it right</button><button type="button" class="btn no" data-m="0">I missed something</button></div></div></div><div class="q sa" id="w1-q12"><div class="q-meta"><span class="q-num">Question 12</span><span class="q-kind">Short answer</span><span class="q-status"></span></div><p class="q-text">Is AI entering a golden age or another winter? Give one argument for each side.</p><textarea rows="3" placeholder="Write your answer here, then compare it with the model answer."></textarea><div class="q-actions"><button type="button" class="btn reveal">Show model answer</button></div><div class="model" hidden><div class="model-l">Model answer</div><p><b>Golden age:</b> results now hold up on real problems, not just simplified test cases, and AI is used across many industries. <b>Another winter:</b> much of the progress comes from more computing power and data rather than new ideas, AI has a long history of over-promising, such as self-driving cars “next year”, and marketing money can run ahead of the science.</p><div class="selfmark"><span>How did you do?</span><button type="button" class="btn ok" data-m="1">I got it right</button><button type="button" class="btn no" data-m="0">I missed something</button></div></div></div><div class="q sa" id="w1-q13"><div class="q-meta"><span class="q-num">Question 13</span><span class="q-kind">Short answer</span><span class="q-status"></span></div><p class="q-text">Name two concerns and two benefits of AI.</p><textarea rows="3" placeholder="Write your answer here, then compare it with the model answer."></textarea><div class="q-actions"><button type="button" class="btn reveal">Show model answer</button></div><div class="model" hidden><div class="model-l">Model answer</div><p><b>Concerns:</b> who is responsible when AI causes harm, loss of jobs including creative ones, bias learned from past data, and the risk of AI smarter than people. <b>Benefits:</b> insight into complex problems, machines that work around the clock, skills that can be copied instantly, and support for human creativity.</p><div class="selfmark"><span>How did you do?</span><button type="button" class="btn ok" data-m="1">I got it right</button><button type="button" class="btn no" data-m="0">I missed something</button></div></div></div></div></details></section>
+
+  <div class="pager"><a class="next" href="../Week%202/Week%202%20-%20Search.html"><small>Next →</small>Uninformed and informed search</a></div>
+  </main>
+</div>
+<a href="#" class="to-top" aria-label="Back to top">↑</a>
+<script>
+// Expand all answers before printing
+window.addEventListener('beforeprint',()=>document.querySelectorAll('details').forEach(d=>d.open=true));
+// Show a "swipe sideways" hint on anything wider than the screen
+(()=>{const els=[...document.querySelectorAll('.scroll,.table-wrap,pre')];
+const check=()=>els.forEach(e=>e.classList.toggle('is-overflowing',e.scrollWidth>e.clientWidth+4));
+check();addEventListener('resize',check);document.fonts&&document.fonts.ready.then(check);
+els.forEach(e=>e.addEventListener('scroll',()=>e.classList.add('scrolled'),{passive:true}));
+document.querySelectorAll('details.sec').forEach(d=>d.addEventListener('toggle',check));})();
+// Back-to-top button
+(()=>{const b=document.querySelector('.to-top');if(!b)return;addEventListener('scroll',()=>b.classList.toggle('show',scrollY>900),{passive:true});
+b.addEventListener('click',e=>{e.preventDefault();scrollTo({top:0,behavior:'smooth'})});})();
+
+(()=>{
+const qs=[...document.querySelectorAll('.q')]; if(!qs.length) return;
+const KEY='applied-ai-quiz:'+location.pathname;
+let st={}; try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){st={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const bar=document.querySelector('.quizbar');
+const norm=v=>String(v).trim().replace(/[−–—]/g,'-').replace(/\s+/g,'').replace(/^\+/,'');
+function update(){
+  let done=0,score=0; qs.forEach(q=>{const s=st[q.id]; if(s&&s.d){done++;score+=s.s}});
+  bar.querySelector('.qb-score').textContent=score; bar.querySelector('.qb-done').textContent=done;
+  bar.querySelector('.qb-fill').style.width=(done/qs.length*100)+'%';
+  const fin=bar.querySelector('.qb-final');
+  if(done===qs.length){const pct=Math.round(score/qs.length*100);
+    fin.hidden=false; fin.textContent=`You scored ${score} out of ${qs.length}.`;}
+  else fin.hidden=true;
+}
+function mark(q,ok){q.classList.remove('correct','incorrect');q.classList.add(ok?'correct':'incorrect')}
+function record(q,score,p){ if(st[q.id]&&st[q.id].d) return; st[q.id]={d:1,s:score,p}; save(); update(); }
+bar.querySelector('.qb-reset').addEventListener('click',()=>{ if(!confirm('Clear all your answers for this week?')) return; st={}; save(); location.reload(); });
+
+/* multiple choice */
+qs.filter(q=>q.classList.contains('mcq')).forEach(q=>{
+  const ans=+q.dataset.answer, opts=[...q.querySelectorAll('.opt')];
+  const apply=i=>{opts.forEach((o,j)=>{o.disabled=true;if(j===ans)o.classList.add('right');else if(j===i)o.classList.add('wrong');else o.classList.add('dim')});
+    q.querySelector('.explain').hidden=false; mark(q,i===ans)};
+  opts.forEach((o,i)=>o.addEventListener('click',()=>{apply(i);record(q,i===ans?1:0,i)}));
+  const s=st[q.id]; if(s&&s.d) apply(s.p);
+});
+
+/* short answer */
+qs.filter(q=>q.classList.contains('sa')).forEach(q=>{
+  const ta=q.querySelector('textarea'), model=q.querySelector('.model'), rev=q.querySelector('.reveal');
+  const show=()=>{model.hidden=false;rev.disabled=true};
+  rev.addEventListener('click',show);
+  const apply=m=>{show();q.querySelectorAll('.selfmark .btn').forEach(b=>{b.disabled=true;if(b.dataset.m==m)b.classList.add('sel')});mark(q,m==1)};
+  q.querySelectorAll('.selfmark .btn').forEach(b=>b.addEventListener('click',()=>{apply(+b.dataset.m);record(q,+b.dataset.m,{m:+b.dataset.m,t:ta.value})}));
+  const s=st[q.id]; if(s&&s.d){ta.value=(s.p&&s.p.t)||'';apply(s.p.m)}
+});
+
+/* tree tasks: value inputs and/or clickable pruned leaves */
+qs.filter(q=>q.classList.contains('tv')).forEach(q=>{
+  const ins=[...q.querySelectorAll('.tin')], picks=[...q.querySelectorAll('g.pick')], msg=q.querySelector('.q-msg');
+  const toggle=g=>{ if(g.classList.contains('locked'))return; g.classList.toggle('sel'); g.classList.remove('good','bad'); };
+  picks.forEach(g=>{g.addEventListener('click',()=>toggle(g));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(g)}})});
+  ins.forEach(i=>{i.addEventListener('input',()=>i.classList.remove('good','bad'));i.addEventListener('keydown',e=>{if(e.key==='Enter')check()})});
+  function check(silent){
+    let ok=true, empty=0;
+    ins.forEach(i=>{ if(!i.value.trim()){empty++;ok=false;i.classList.remove('good','bad');return}
+      const g=norm(i.value)===norm(i.dataset.answer); i.classList.toggle('good',g); i.classList.toggle('bad',!g); if(!g) ok=false; });
+    let pickErr=0; picks.forEach(g=>{const want=g.dataset.ans==='1', has=g.classList.contains('sel');
+      g.classList.remove('good','bad'); if(want!==has){pickErr++;ok=false; if(has) g.classList.add('bad')} else if(want) g.classList.add('good'); });
+    if(empty&&!silent){msg.className='q-msg bad';msg.textContent=`Fill in all ${ins.length} boxes first.`;return}
+    const wrongVals=ins.filter(i=>i.classList.contains('bad')).length;
+    msg.className='q-msg '+(ok?'good':'bad');
+    msg.textContent= ok?'All correct.': [wrongVals?(wrongVals>1?`${wrongVals} values are wrong.`:'1 value is wrong.'):'', pickErr?'The skipped squares are not quite right.':''].filter(Boolean).join(' ')+' Try again, or show the solution.';
+    mark(q,ok); q.querySelector('.explain').hidden=!ok; record(q,ok?1:0,{});
+  }
+  q.querySelector('.check').addEventListener('click',()=>check());
+  q.querySelector('.solve').addEventListener('click',()=>{
+    ins.forEach(i=>{i.value=i.dataset.answer.replace('-','−');i.classList.remove('bad');i.classList.add('good')});
+    picks.forEach(g=>{g.classList.remove('bad','good');g.classList.toggle('sel',g.dataset.ans==='1');if(g.dataset.ans==='1')g.classList.add('good')});
+    msg.className='q-msg';msg.textContent='Here is the solution.';q.querySelector('.explain').hidden=false;
+    if(!(st[q.id]&&st[q.id].d)){mark(q,false);record(q,0,{})}
+  });
+  const s=st[q.id]; if(s&&s.d){ mark(q,s.s===1); msg.textContent=s.s?'You solved this earlier.':'You tried this earlier. Try again for practice.'; }
+});
+
+/* ordering tasks */
+qs.filter(q=>q.classList.contains('ord')).forEach(q=>{
+  const seq=q.dataset.seq.split('|'), nodes=[...q.querySelectorAll('.ordn')], trail=q.querySelector('.ord-trail'), msg=q.querySelector('.q-msg');
+  const label=n=>n.dataset.key; let pick=[];
+  const NS='http://www.w3.org/2000/svg';
+  function paint(){
+    nodes.forEach(n=>{const i=pick.indexOf(n.dataset.key);n.classList.toggle('chosen',i>=0);n.classList.remove('bad');
+      if(n.tagName.toLowerCase()==='g'){ n.querySelectorAll('.ob').forEach(e=>e.remove());
+        if(i>=0){const x=+n.dataset.x+17,y=+n.dataset.y-15;const c=document.createElementNS(NS,'circle');c.setAttribute('class','ob obadge');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',9);
+          const t=document.createElementNS(NS,'text');t.setAttribute('class','ob obadge-t');t.setAttribute('x',x);t.setAttribute('y',y+3.5);t.textContent=i+1;n.append(c,t)} }
+      else { if(i>=0) n.dataset.n=i+1; else delete n.dataset.n; } });
+    const svgMode=nodes[0].tagName.toLowerCase()==='g';
+    trail.textContent=!pick.length?'':svgMode?pick.join(' → '):pick.length+' of '+seq.length+' placed';
+  }
+  function finish(){
+    const ok=pick.every((k,i)=>k===seq[i]);
+    const first=pick.findIndex((k,i)=>k!==seq[i]);
+    if(!ok){const n=nodes.find(m=>m.dataset.key===pick[first]); if(n) n.classList.add('bad');}
+    msg.className='q-msg '+(ok?'good':'bad');
+    msg.textContent=ok?'That is the right order.':`Not quite. Item ${first+1} is in the wrong place. Choose “Start again” to try again.`;
+    mark(q,ok); q.querySelector('.explain').hidden=false; record(q,ok?1:0,{});
+  }
+  const choose=n=>{ if(pick.includes(n.dataset.key)||pick.length>=seq.length) return; pick.push(n.dataset.key); msg.textContent=''; paint(); if(pick.length===seq.length) finish(); };
+  nodes.forEach(n=>{n.addEventListener('click',()=>choose(n)); n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(n)}})});
+  q.querySelector('.undo').addEventListener('click',()=>{pick.pop();msg.textContent='';paint()});
+  q.querySelector('.clear').addEventListener('click',()=>{pick=[];msg.textContent='';paint()});
+  paint();
+  const s=st[q.id]; if(s&&s.d){ mark(q,s.s===1); q.querySelector('.explain').hidden=false; msg.textContent=s.s?'You solved this earlier.':'You tried this earlier. Try again for practice.'; }
+});
+update();
+})();
+
+</script>
+</body>
+</html>

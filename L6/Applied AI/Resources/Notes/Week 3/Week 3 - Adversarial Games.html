@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 3 – Adversarial search and games</title>
+<script>(function(){try{var t=localStorage.getItem('applied-ai-theme');if(t==='dark'||t==='system')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf9f5; --surface:#faf9f5; --surface-2:#f0eee6; --ink:#141413; --ink-2:#5e5d59; --muted:#87867f;
+  --line:#e8e6dc; --line-2:#d1cfc5; --accent:#c4643f; --accent-soft:#f6e4dc; --accent-2:#4f7fae; --accent-2-soft:#e4ecf4;
+  --ok:#5f7349; --ok-soft:#eaeee0; --warn:#8a6a37; --warn-soft:#f4eee1; --err:#bf4d43;
+  --max:#e2ebf4; --max-line:#6a9bcc; --min:#f3e0e7; --min-line:#c46686; --chance:#efe7d6; --chance-line:#b0894f;
+  --leaf:#ebeaf2; --leaf-line:#8e8ca8; --code:#f5f4ed;
+  --radius:10px;
+  --serif:"Source Serif 4", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font:"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"Geist Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){ :root[data-theme="system"]{
+    --bg:#141413; --surface:#1a1918; --surface-2:#262624; --ink:#faf9f5; --ink-2:#b0aea5; --muted:#87867f;
+    --line:#30302e; --line-2:#3d3d3a; --accent:#d97757; --accent-soft:rgba(217,119,87,.14); --accent-2:#6a9bcc; --accent-2-soft:rgba(106,155,204,.12);
+    --ok:#9bb27f; --ok-soft:rgba(120,140,93,.16); --warn:#d4b483; --warn-soft:rgba(212,180,131,.10); --err:#e0796f;
+    --max:#22303d; --max-line:#6a9bcc; --min:#3a2530; --min-line:#d283a0; --chance:#332d22; --chance-line:#d4b483;
+    --leaf:#2a2933; --leaf-line:#a9a7c4; --code:#1f1e1d; color-scheme: dark;
+} }
+:root[data-theme="dark"]{
+    --bg:#141413; --surface:#1a1918; --surface-2:#262624; --ink:#faf9f5; --ink-2:#b0aea5; --muted:#87867f;
+    --line:#30302e; --line-2:#3d3d3a; --accent:#d97757; --accent-soft:rgba(217,119,87,.14); --accent-2:#6a9bcc; --accent-2-soft:rgba(106,155,204,.12);
+    --ok:#9bb27f; --ok-soft:rgba(120,140,93,.16); --warn:#d4b483; --warn-soft:rgba(212,180,131,.10); --err:#e0796f;
+    --max:#22303d; --max-line:#6a9bcc; --min:#3a2530; --min-line:#d283a0; --chance:#332d22; --chance-line:#d4b483;
+    --leaf:#2a2933; --leaf-line:#a9a7c4; --code:#1f1e1d; color-scheme: dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.72 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01"}
+::selection{background:var(--accent);color:#fff}
+a{color:var(--accent);text-decoration:none;text-underline-offset:3px}
+a:hover{text-decoration:underline}
+strong,b{font-weight:600}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+@media (max-width:600px){.wrap{padding:0 16px}}
+
+/* header */
+header.top{border-bottom:1px solid var(--line)}
+header.top .wrap{padding-top:56px;padding-bottom:44px}
+@media (max-width:600px){header.top .wrap{padding-top:32px;padding-bottom:28px}}
+.crumbs{font-size:13px;color:var(--muted);margin-bottom:22px;font-family:var(--mono)}
+.crumbs a{color:var(--muted)}.crumbs a:hover{color:var(--ink);text-decoration:none}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:500 12px/1 var(--mono);letter-spacing:.02em;color:var(--ink-2);border:1px solid var(--line);padding:6px 10px;border-radius:99px;background:var(--surface-2)}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+h1{font-size:clamp(34px,5.2vw,54px);line-height:1.05;margin:18px 0 14px;letter-spacing:-.04em;font-weight:600}
+.meta{color:var(--ink-2);font-size:15px;max-width:760px}
+
+/* layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:56px;padding-top:16px;padding-bottom:72px}
+@media (min-width:1000px){.layout{grid-template-columns:220px minmax(0,1fr)}}
+nav.toc{font-size:13.5px}
+@media (min-width:1000px){nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding-top:40px}}
+@media (max-width:999px){nav.toc{padding-top:24px}}
+nav.toc h2{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
+nav.toc li{margin:0}
+nav.toc a{display:block;color:var(--ink-2);padding:5px 0 5px 14px;margin-left:-1px;border-left:1px solid transparent;line-height:1.4;transition:color .15s,border-color .15s}
+nav.toc a:hover{color:var(--ink);text-decoration:none}
+nav.toc a.active{color:var(--ink);border-left-color:var(--ink);font-weight:500}
+main{min-width:0}
+
+/* sections */
+section{padding:40px 0 36px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:none}
+section>h2{font-size:28px;margin:0 0 6px;line-height:1.2;letter-spacing:-.025em;font-weight:600;scroll-margin-top:24px}
+section>h2 .num{display:block;font:500 12px/1 var(--mono);color:var(--accent);letter-spacing:.04em;margin-bottom:12px}
+h3{font-size:19px;margin:34px 0 8px;letter-spacing:-.015em;font-weight:600}
+h4{font-size:15.5px;margin:22px 0 6px;font-weight:600;letter-spacing:-.01em}
+.slides{font:400 12px/1 var(--mono);color:var(--muted);margin:10px 0 18px}
+p{margin:10px 0;color:var(--ink)}
+ul,ol{padding-left:22px;margin:10px 0}
+li{margin:5px 0}
+li::marker{color:var(--muted)}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+pre{font:400 13.5px/1.65 var(--mono);background:var(--code);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;overflow-x:auto;margin:18px 0}
+pre .kw{color:var(--accent);font-weight:500}
+pre .cm{color:var(--muted)}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{border-bottom:1px solid var(--line);padding:10px 14px;text-align:left;vertical-align:top}
+tr:last-child>td,tr:last-child>th{border-bottom:none}
+th{font-weight:500;color:var(--ink-2);background:var(--surface-2);font-size:13px}
+td+td,th+th,td+th,th+td{border-left:1px solid var(--line)}
+td.c,th.c{text-align:center}
+.callout .table-wrap{background:var(--surface)}
+
+/* callouts */
+.callout{border:1px solid var(--line);background:var(--surface-2);border-radius:var(--radius);padding:14px 18px;margin:20px 0}
+.callout>strong:first-child{display:flex;align-items:center;gap:8px;font:500 11.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;color:var(--accent)}
+.callout>strong:first-child::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.callout.beyond{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 22%,transparent)}
+.callout.beyond>strong:first-child{color:var(--warn)}
+.callout.key{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 22%,transparent)}
+.callout.key>strong:first-child{color:var(--ok)}
+.callout.note{background:var(--accent-2-soft);border-color:color-mix(in srgb,var(--accent-2) 22%,transparent)}
+.callout.note>strong:first-child{color:var(--accent-2)}
+.tag-beyond{font:500 10.5px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--warn);background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 25%,transparent);border-radius:99px;padding:3px 8px;margin:0 2px;vertical-align:1px}
+
+/* glance / cards */
+.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;margin-top:22px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.glance div{background:var(--surface);padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
+.glance b{display:block;margin-bottom:6px;color:var(--muted);font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:16px 0}
+.card{border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;background:var(--surface)}
+.card h4{margin-top:0}
+.card ul{margin-bottom:0}
+.pill{display:inline-block;font-size:12.5px;padding:3px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--line);margin:3px 3px 3px 0;color:var(--ink-2)}
+dl.terms{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:0;margin:16px 0;border-top:1px solid var(--line)}
+dl.terms dt,dl.terms dd{padding:11px 0;border-bottom:1px solid var(--line)}
+dl.terms dt{font-weight:500;padding-right:16px}
+dl.terms dd{margin:0;color:var(--ink-2)}
+@media (max-width:600px){dl.terms{grid-template-columns:1fr}dl.terms dt{border-bottom:none;padding-bottom:0}dl.terms dd{padding-top:4px}}
+
+/* figures */
+figure.diagram{margin:24px 0;border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:var(--surface-2);
+  background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px}
+figure.diagram .scroll{overflow-x:auto}
+figure.diagram svg{display:block;width:100%;height:auto;margin:0 auto}
+figcaption{font-size:13.5px;color:var(--ink-2);margin:14px auto 0;text-align:center;max-width:680px;line-height:1.55}
+figcaption .legend{display:block;margin-top:6px;color:var(--muted);font:400 12px/1.5 var(--mono)}
+
+/* svg styles */
+svg text{font-family:var(--font);fill:var(--ink)}
+.edge{stroke:var(--line-2);stroke-width:1.5}
+.edge.pruned{stroke:var(--muted);stroke-dasharray:4 4;opacity:.7}
+.edge.hi{stroke:var(--accent);stroke-width:3}
+.elabel{font-size:12px;fill:var(--ink-2);font-family:var(--mono)!important}
+.n-max{fill:var(--max);stroke:var(--max-line);stroke-width:1.5}
+.n-min{fill:var(--min);stroke:var(--min-line);stroke-width:1.5}
+.n-chance{fill:var(--chance);stroke:var(--chance-line);stroke-width:1.5}
+.n-leaf{fill:var(--leaf);stroke:var(--leaf-line);stroke-width:1.3}
+.n-box{fill:var(--surface);stroke:var(--line-2);stroke-width:1.3}
+.n-box.expanded{fill:var(--max);stroke:var(--max-line)}
+.n-box.fringe{fill:var(--surface);stroke:var(--accent-2);stroke-dasharray:4 3}
+.n-box.goal{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.n-box.cur{fill:var(--accent-2-soft);stroke:var(--accent-2);stroke-width:2}
+.pruned{opacity:.45}
+.hi.n-max,.hi.n-min,.hi.n-leaf,.hi.n-box{stroke:var(--accent);stroke-width:2.6}
+.nval{font-size:14px;font-weight:600;text-anchor:middle}
+.nlabel{font-size:13px;font-weight:500;text-anchor:middle}
+.nsub{font-size:11px;text-anchor:middle;fill:var(--ink-2);font-family:var(--mono)!important}
+.nnote{font-size:11.5px;text-anchor:middle;fill:var(--ink-2)}
+.xmark{font-size:10.5px;text-anchor:middle;fill:var(--accent-2);font-weight:500}
+.badge{fill:var(--ink);stroke:none}
+.badge-t{font-size:10px;font-weight:600;text-anchor:middle;fill:var(--bg);font-family:var(--mono)!important}
+.road{stroke:var(--line-2);stroke-width:2}
+.road.opt{stroke:var(--accent);stroke-width:4.5}
+.road.greedy{stroke:var(--accent-2);stroke-width:4.5;stroke-dasharray:9 5}
+.dist{font-size:11px;text-anchor:middle;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface-2);stroke-width:7px;font-family:var(--mono)!important}
+.city{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+.city.goal{fill:var(--ok)}
+.city.start{fill:var(--accent)}
+.cname{font-size:12.5px;font-weight:500;paint-order:stroke;stroke:var(--surface-2);stroke-width:5px}
+.axis{stroke:var(--line-2);stroke-width:1.4}
+.curve{fill:none;stroke:var(--accent);stroke-width:3}
+.guide{stroke:var(--muted);stroke-dasharray:3 4}
+.small{font-size:12px;fill:var(--ink-2)}
+.set{stroke-width:1.6}
+
+/* revision */
+details.qa{border:1px solid var(--line);border-radius:var(--radius);margin:10px 0;background:var(--surface);transition:border-color .15s}
+details.qa:hover{border-color:var(--line-2)}
+details.qa summary{cursor:pointer;padding:14px 18px 14px 48px;font-weight:500;list-style:none;position:relative;line-height:1.5}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"";position:absolute;left:18px;top:17px;width:18px;height:18px;border-radius:6px;border:1px solid var(--line-2);
+  background:linear-gradient(var(--ink-2),var(--ink-2)) center/8px 1.5px no-repeat,linear-gradient(var(--ink-2),var(--ink-2)) center/1.5px 8px no-repeat}
+details.qa[open] summary::before{background:linear-gradient(var(--ink-2),var(--ink-2)) center/8px 1.5px no-repeat}
+details.qa .ans{padding:14px 18px 16px 48px;border-top:1px solid var(--line);color:var(--ink-2)}
+details.qa .ans figure{margin-left:-30px}
+
+/* pager & footer */
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:40px}
+@media (max-width:600px){.pager{grid-template-columns:1fr}}
+.pager a{border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;color:var(--ink);font-weight:500;transition:border-color .15s}
+.pager a:hover{border-color:var(--ink);text-decoration:none}
+.pager small{display:block;color:var(--muted);font:400 12px/1.6 var(--mono);margin-bottom:2px}
+.pager .next{text-align:right;grid-column:2}
+@media (max-width:600px){.pager .next{grid-column:1}}
+footer{color:var(--muted);font-size:13px;padding:28px 24px 48px;border-top:1px solid var(--line)}
+
+/* timeline */
+.timeline{list-style:none;padding:0;margin:20px 0;position:relative}
+.timeline::before{content:"";position:absolute;left:5px;top:10px;bottom:10px;width:1px;background:var(--line-2)}
+.timeline>li{position:relative;padding:0 0 18px 30px;margin:0}
+.timeline>li::before{content:"";position:absolute;left:0;top:7px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+.timeline>li.winter::before{border-color:var(--min-line);background:var(--min-line)}
+.timeline .era{font-weight:600}
+.timeline .yrs{display:inline-block;font:500 12.5px/1 var(--mono);color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);padding:4px 7px;border-radius:6px;margin-right:8px}
+.timeline ul{margin:6px 0 0;color:var(--ink-2)}
+
+@media print{
+  nav.toc,.pager{display:none}
+  .layout{grid-template-columns:1fr}
+  section{break-inside:auto;padding:16px 0}
+  details.qa{break-inside:avoid}
+  figure.diagram{background-image:none}
+}
+
+/* theme switcher */
+.foot-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.foot-row>div:first-child{flex:1 1 380px}
+.theme-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:99px;background:var(--surface-2)}
+.theme-switch .ts-l{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 8px 0 10px}
+.theme-switch button{display:inline-flex;align-items:center;gap:6px;font:500 13px/1 var(--font);color:var(--ink-2);background:transparent;border:0;border-radius:99px;padding:7px 12px;cursor:pointer;transition:background .15s,color .15s}
+.theme-switch button:hover{color:var(--ink)}
+.theme-switch button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.theme-switch svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:600px){footer{padding:24px 16px 40px}}
+@media (max-width:440px){.theme-switch .ts-l{display:none}.theme-switch button{padding:7px 10px}}
+@media (max-width:340px){.theme-switch svg{display:none}}
+@media print{.theme-switch{display:none}}
+
+.q-intro{color:var(--ink-2);font-size:14.5px}
+.quizbar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin:18px 0 10px}
+.qb-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:14.5px}
+.qb-row>div:first-child{font-size:15px}
+.qb-score{font:600 20px/1 var(--mono)}
+.qb-l{color:var(--muted);font:500 12px/1 var(--mono);letter-spacing:.03em}
+.qb-reset{margin-left:auto}
+.qb-track{height:4px;background:var(--surface-2);border-radius:99px;margin-top:10px;overflow:hidden}
+.qb-fill{height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .4s ease}
+.qb-final{margin-top:10px;font-size:14.5px;font-weight:500}
+.q{border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin:14px 0;background:var(--surface);transition:border-color .2s}
+.q.correct{border-color:color-mix(in srgb,var(--ok) 45%,transparent)}
+.q.incorrect{border-color:color-mix(in srgb,var(--min-line) 45%,transparent)}
+.q-meta{display:flex;align-items:center;gap:10px;font:500 11.5px/1 var(--mono);color:var(--muted);letter-spacing:.03em}
+.q-num{color:var(--accent)}
+.q-status{margin-left:auto;font-weight:600}
+.q.correct .q-status{color:var(--ok)}.q.correct .q-status::before{content:"Correct"}
+.q.incorrect .q-status{color:var(--min-line)}.q.incorrect .q-status::before{content:"Incorrect"}
+.q-text{font-weight:500;font-size:16px;margin:10px 0 14px}
+.opts{display:grid;gap:8px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover:not(:disabled){border-color:var(--line-2);background:var(--surface-2)}
+.opt:disabled{cursor:default}
+.opt-l{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:7px;border:1px solid var(--line-2);font:500 12px/1 var(--mono);color:var(--ink-2)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.right .opt-l{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.wrong{border-color:var(--min-line);background:color-mix(in srgb,var(--min-line) 9%,transparent)}
+.opt.wrong .opt-l{background:var(--min-line);border-color:var(--min-line);color:#fff}
+.opt.dim{opacity:.55}
+.explain{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:14.5px;color:var(--ink-2)}
+.explain::before{content:"Explanation";display:block;font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.btn{font:500 13.5px/1 var(--font);color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:9px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){background:var(--surface-2)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary:hover:not(:disabled){background:var(--ink-2);border-color:var(--ink-2)}
+.btn.ghost{border-color:var(--line)}
+.btn.ok.sel{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.no.sel{background:var(--min-line);border-color:var(--min-line);color:#fff}
+.q-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.q-msg{font-size:14px;color:var(--ink-2);margin-left:4px}
+.q-msg.good{color:var(--ok);font-weight:500}.q-msg.bad{color:var(--min-line);font-weight:500}
+.q textarea{width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+.q textarea:focus,.tin:focus{outline:2px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:1px;border-color:var(--accent)}
+.model{margin-top:12px;padding:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--ok) 25%,transparent);background:var(--ok-soft);font-size:14.5px}
+.model-l{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ok);margin-bottom:8px}
+.selfmark{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--ok) 20%,transparent)}
+.selfmark span{color:var(--ink-2);font-size:13.5px;margin-right:4px}
+.tv-fig{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface-2);background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px}
+.tv-fig .scroll{overflow-x:auto}
+.tv-fig svg{display:block;width:100%;height:auto;margin:0 auto}
+.tin{display:block;margin:0;width:36px;height:22px;box-sizing:border-box;-webkit-appearance:none;appearance:none;text-align:center;font:600 13px/1 var(--mono);color:var(--ink);background:var(--surface);border:1.5px solid var(--accent);border-radius:6px;padding:0}
+.tin.good{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.tin.bad{border-color:var(--min-line);background:color-mix(in srgb,var(--min-line) 12%,var(--surface));color:var(--min-line)}
+g.pick,g.ordn{cursor:pointer}
+g.pick:hover rect,g.ordn:hover rect,g.ordn:hover circle{stroke:var(--accent);stroke-width:2.4}
+g.pick.sel rect{fill:color-mix(in srgb,var(--accent-2) 14%,var(--surface));stroke:var(--accent-2);stroke-width:2.4;stroke-dasharray:4 3}
+g.pick.sel text.nval{fill:var(--muted);text-decoration:line-through}
+g.pick.good rect{stroke:var(--ok)!important;stroke-width:2.6}
+g.pick.bad rect{stroke:var(--min-line)!important;stroke-width:2.6;stroke-dasharray:none}
+g:focus{outline:none}g:focus-visible rect,g:focus-visible circle{stroke:var(--accent);stroke-width:3}
+g.ordn.chosen rect,g.ordn.chosen circle{fill:var(--accent-soft);stroke:var(--accent)}
+.obadge{fill:var(--accent)}.obadge-t{font:600 10px/1 var(--mono)!important;fill:#fff;text-anchor:middle}
+g.ordn.bad rect,g.ordn.bad circle{stroke:var(--min-line);stroke-width:2.6}
+.ord-body .tv-fig{margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:99px;padding:8px 14px;cursor:pointer;transition:all .15s}
+.chip:hover:not(:disabled){border-color:var(--accent)}
+.chip.chosen{background:var(--accent-soft);border-color:var(--accent);padding-left:38px}
+.chip.chosen::before{content:attr(data-n);position:absolute;left:8px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font:600 11px/22px var(--mono);text-align:center}
+.chip.bad{border-color:var(--min-line);background:color-mix(in srgb,var(--min-line) 10%,transparent)}
+.chip.bad::before{background:var(--min-line)}
+.ord-trail{min-height:22px;margin-top:12px;font:500 13.5px/1.6 var(--mono);color:var(--ink-2)}
+.ord-trail:empty::before{content:"Your order appears here";color:var(--muted);font-family:var(--font);font-weight:400}
+.legend-inline{margin:10px 0 0;text-align:center;font:400 12px/1.5 var(--mono);color:var(--muted)}
+@media print{.quizbar,.q-actions,.selfmark{display:none}.q .explain,.q .model{display:block!important}}
+
+/* ===== Warm editorial theme (ivory / slate, serif body, sans headings) ===== */
+body{font:400 17.5px/1.65 var(--serif);letter-spacing:-.003em;font-feature-settings:normal}
+h1,h2,h3,h4,nav.toc,.crumbs,.eyebrow,table,.btn,.q-meta,.glance b,figcaption,.pager,footer,.pill,dl.terms dt,
+.slides,.callout>strong:first-child,.tag-beyond,.timeline .yrs,.quizbar,.chip,.ord-trail,.q-msg,.theme-switch,.model-l,.explain::before,.selfmark span{font-family:var(--font)}
+h1{font-weight:700;letter-spacing:-.02em;line-height:1.1;font-size:clamp(28px,4vw,42px)}
+section>h2{font-weight:600;letter-spacing:-.02em;font-size:30px}
+h3{font-weight:600;font-size:20px;letter-spacing:-.01em}
+h4{font-weight:600}
+.meta{font-family:var(--serif);font-size:19px;line-height:1.5;color:var(--ink-2);max-width:720px}
+a{color:var(--ink-2);text-decoration:underline;text-decoration-color:var(--line-2);text-decoration-thickness:1px;text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
+a:hover{color:var(--ink);text-decoration-color:var(--ink)}
+nav.toc a,.pager a,a.wk,.crumbs a,.to-top{text-decoration:none}
+.eyebrow{background:transparent;border:0;padding:0;font:500 13px/1 var(--font);letter-spacing:0;color:var(--ink-2)}
+.eyebrow::before{width:8px;height:8px;border-radius:2px;background:var(--accent)}
+.crumbs{font-family:var(--font);font-size:14px}
+header.top .wrap{padding-top:64px;padding-bottom:52px}
+section>h2 .num{font:500 13px/1 var(--font);color:var(--accent);letter-spacing:0}
+.slides{font:400 13px/1 var(--font)}
+nav.toc h2{font:600 12px/1 var(--font);letter-spacing:.04em;color:var(--ink-2)}
+nav.toc a{font-size:14px}
+nav.toc a.active{border-left-color:var(--accent)}
+table{font-size:15px}
+th{font-weight:600;color:var(--ink);background:var(--surface-2)}
+.table-wrap,.callout,.card,figure.diagram,details.qa,.q,.pager a,.glance,pre,.quizbar,.tv-fig{border-radius:var(--radius)}
+figure.diagram,.tv-fig{background-image:none;background-color:var(--surface-2);border-color:var(--line)}
+figcaption{font-size:14px}
+.callout{background:var(--surface-2);border-color:var(--line)}
+.callout>strong:first-child{font:600 12px/1 var(--font);letter-spacing:.04em}
+.callout.beyond{background:var(--warn-soft)} .callout.key{background:var(--ok-soft)} .callout.note{background:var(--accent-2-soft)}
+.callout.note>strong:first-child{color:var(--accent-2)}
+.tag-beyond{font:600 10.5px/1 var(--font);letter-spacing:.04em}
+.glance{background:var(--line)} .glance div{background:var(--bg);font-size:15.5px}
+.glance b{font:600 12px/1 var(--font);letter-spacing:.04em;color:var(--accent)}
+.card{background:transparent}
+.pill{background:transparent}
+code{background:var(--surface-2);border-color:var(--line);font-size:.82em}
+pre{background:var(--code)}
+.btn{border-radius:8px}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.opt{font-family:var(--serif);font-size:16.5px;background:transparent;border-radius:8px}
+.opt-l{font-family:var(--font);border-radius:6px}
+.opt.wrong{border-color:var(--err);background:color-mix(in srgb,var(--err) 9%,transparent)}
+.opt.wrong .opt-l{background:var(--err);border-color:var(--err)}
+.q{background:transparent}
+.q.incorrect{border-color:color-mix(in srgb,var(--err) 45%,transparent)}
+.q.incorrect .q-status{color:var(--err)}
+.q-text{font-size:18px;font-weight:500}
+.q-num{color:var(--accent)}
+.btn.no.sel{background:var(--err);border-color:var(--err)}
+.tin.bad{border-color:var(--err);color:var(--err);background:color-mix(in srgb,var(--err) 12%,var(--surface))}
+.q-msg.bad{color:var(--err)}
+g.pick.bad rect,g.ordn.bad rect,g.ordn.bad circle{stroke:var(--err)!important}
+.chip.bad{border-color:var(--err)} .chip.bad::before{background:var(--err)}
+.quizbar{background:color-mix(in srgb,var(--bg) 90%,transparent)}
+.qb-score{font-family:var(--font)}
+details.qa{background:transparent}
+.timeline .yrs{font-weight:600;background:transparent;border-color:var(--line-2)}
+.theme-switch{background:transparent;border-color:var(--line-2)}
+.theme-switch button[aria-pressed="true"]{background:var(--ink);color:var(--bg);box-shadow:none}
+footer{font-size:14px;color:var(--ink-2)}
+
+/* ===== Clean layout: one reading column, breadcrumbs, collapsible sections ===== */
+header.top{border-bottom:0}
+header.top .wrap{padding-bottom:0}
+.layout{grid-template-columns:minmax(0,1fr)!important;max-width:860px;gap:0;padding-top:0}
+header.top .wrap,footer .wrap{max-width:860px}
+.breadcrumbs ol{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px;font:400 14px/1.4 var(--font);color:var(--ink-2)}
+.breadcrumbs li{display:inline-flex;align-items:center;gap:4px;margin:0}
+.breadcrumbs a{color:var(--ink-2);text-decoration:none}
+.breadcrumbs a:hover{color:var(--ink);text-decoration:underline}
+.breadcrumbs [aria-current]{color:var(--ink)}
+.bc-sep{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+section{padding:0;border-bottom:1px solid var(--line)}
+details.sec>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;padding:26px 0;user-select:none}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary h2{margin:0}
+details.sec>summary:hover h2{color:var(--ink-2)}
+details.sec>summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
+.sec-chev{flex:none;width:10px;height:10px;border-right:1.6px solid var(--ink-2);border-bottom:1.6px solid var(--ink-2);transform:rotate(45deg);margin:-6px 6px 0 0;transition:transform .2s}
+details.sec[open] .sec-chev{transform:rotate(-135deg);margin-top:4px}
+.sec-body{padding:0 0 34px}
+.sec-body>*:first-child{margin-top:0}
+section>details>summary h2{font-size:28px;font-weight:600;letter-spacing:-.02em}
+.foot-meta{color:var(--ink);margin:0 0 6px}
+footer p{margin:0 0 6px}
+@media (max-width:600px){details.sec>summary{padding:20px 0}section>details>summary h2{font-size:22px}.sec-body{padding-bottom:26px}}
+@media print{.sec-chev{display:none}}
+
+footer{padding-left:0!important;padding-right:0!important}
+
+
+/* ===== Highlight boxes: four fixed types ===== */
+.callout.key{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 22%,transparent)}
+.callout.key>strong:first-child{color:var(--ok)}
+.callout.def{background:var(--accent-2-soft);border-color:color-mix(in srgb,var(--accent-2) 22%,transparent)}
+.callout.def>strong:first-child{color:var(--accent-2)}
+.callout.warn{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 25%,transparent)}
+.callout.warn>strong:first-child{color:var(--accent)}
+.callout.good{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 22%,transparent)}
+.callout.good>strong:first-child{color:var(--warn)}
+
+
+/* timeline: dots drawn as vector shapes so they stay perfectly round at any display scaling,
+   and centred on the line (dot centre and line centre both at 6.5px) */
+.timeline::before{left:6px;width:1px}
+.timeline>li::before,.timeline>li::after{content:"";position:absolute;box-sizing:border-box;border:0;border-radius:0;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.timeline>li::after{left:0;top:9px;width:13px;height:13px;background:var(--bg);-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E");z-index:1}
+.timeline>li::before{left:0;top:9px;width:13px;height:13px;background:var(--accent);-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='11' fill='none' stroke='black' stroke-width='4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='11' fill='none' stroke='black' stroke-width='4'/%3E%3C/svg%3E");z-index:2}
+.timeline>li.winter::before{background:var(--min-line);-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='black'/%3E%3C/svg%3E")}
+
+/* ===== Contents: collapsible on small screens ===== */
+nav.toc details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+nav.toc details>summary::-webkit-details-marker{display:none}
+nav.toc details>summary h2{margin:0}
+@media (min-width:1000px){nav.toc details>summary{cursor:default;margin-bottom:14px}.toc-chev{display:none}}
+@media (max-width:999px){
+  nav.toc{padding-top:20px}
+  nav.toc details{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2)}
+  nav.toc details>summary{padding:14px 16px;min-height:48px}
+  nav.toc details[open]>summary{border-bottom:1px solid var(--line)}
+  nav.toc ol{border-left:0;padding:8px 6px 10px}
+  nav.toc a{padding:9px 10px;border-left:0;border-radius:6px;margin-left:0}
+  nav.toc a.active{background:var(--accent-soft)}
+  .toc-chev{width:9px;height:9px;border-right:1.5px solid var(--ink-2);border-bottom:1.5px solid var(--ink-2);transform:rotate(45deg);transition:transform .2s;margin:-4px 4px 0 0}
+  nav.toc details[open] .toc-chev{transform:rotate(-135deg);margin-top:4px}
+}
+
+/* ===== Swipe hint for wide content ===== */
+.is-overflowing{background-image:linear-gradient(to left,color-mix(in srgb,var(--ink) 10%,transparent),transparent 16px);
+  background-repeat:no-repeat;background-position:right top;background-size:16px 100%}
+figure.diagram:has(.scroll.is-overflowing:not(.scrolled)) figcaption::before,
+.tv-fig:has(.scroll.is-overflowing:not(.scrolled))::after,
+.table-wrap.is-overflowing:not(.scrolled)+*::before{content:none}
+figure.diagram:has(.scroll.is-overflowing:not(.scrolled)) figcaption::before{content:"Swipe sideways to see the whole diagram";display:block;font:500 12px/1 var(--font);color:var(--accent);margin-bottom:8px}
+.tv-fig:has(.scroll.is-overflowing:not(.scrolled))::after{content:"Swipe sideways to see the whole tree";display:block;text-align:center;font:500 12px/1 var(--font);color:var(--accent);margin-top:8px}
+
+/* ===== Back to top ===== */
+.to-top{position:fixed;right:16px;bottom:16px;z-index:20;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;
+  background:var(--ink);color:var(--bg);font:600 18px/1 var(--font);box-shadow:0 6px 20px -6px rgba(0,0,0,.35);
+  opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .2s,transform .2s}
+.to-top.show{opacity:1;transform:none;pointer-events:auto}
+.to-top:hover{color:var(--bg)}
+@media (min-width:1000px){.to-top{right:28px;bottom:28px}}
+@media print{.to-top{display:none}}
+
+/* ===== Phones ===== */
+@media (max-width:600px){
+  body{font-size:16.5px;line-height:1.62}
+  header.top .wrap{padding-top:28px;padding-bottom:26px}
+  .crumbs{margin-bottom:16px}
+  h1{font-size:clamp(26px,7.5vw,30px);margin:12px 0 10px}
+  .meta{font-size:16.5px}
+  .layout{gap:8px;padding-bottom:48px}
+  section{padding:30px 0 26px}
+  section>h2{font-size:24px}
+  h3{font-size:18px;margin-top:26px}
+  .glance{grid-template-columns:1fr 1fr}
+  .glance div{padding:12px 14px;font-size:14.5px}
+  .cols{grid-template-columns:1fr}
+  table{font-size:14px}
+  th,td{padding:8px 10px}
+  pre{font-size:12.5px;padding:14px}
+  figure.diagram{padding:12px 8px}
+  figcaption{font-size:13px}
+  .callout{padding:12px 14px}
+  .q{padding:16px 14px}
+  .q-text{font-size:16.5px}
+  .opt{font-size:15.5px;padding:11px 12px;min-height:48px}
+  .q-actions .btn{flex:1 1 auto;min-height:44px}
+  .tv-fig{padding:8px}
+  .qb-row{gap:10px 14px}
+  details.qa summary{padding:13px 14px 13px 44px}
+  details.qa summary::before{left:14px}
+  details.qa .ans{padding:12px 14px 14px}
+  .pager a{padding:14px 16px}
+  .timeline>li{padding-left:24px}
+  .foot-row{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:380px){.glance{grid-template-columns:1fr}}
+
+/* ===== Site menu ===== */
+:root{--menu-ink:#cfcdc3;--menu-ink-hover:#a8a69d}
+:root[data-theme="dark"]{--menu-ink:#4a4945;--menu-ink-hover:#73726c}
+@media (prefers-color-scheme: dark){:root[data-theme="system"]{--menu-ink:#4a4945;--menu-ink-hover:#73726c}}
+.menu{position:fixed;top:14px;left:14px;z-index:40}
+.menu-btn{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;border:1px solid var(--menu-ink);background:var(--bg);color:var(--menu-ink);cursor:pointer;transition:color .15s,background .15s,border-color .15s}
+.menu-btn:hover,.menu-btn[aria-expanded="true"]{color:var(--menu-ink-hover);border-color:var(--menu-ink-hover)}
+.menu-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.menu-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;fill:none}
+.menu-panel{position:absolute;top:48px;left:0;width:min(320px,calc(100vw - 28px));background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 12px 32px -12px rgba(20,20,19,.22);padding:6px;font-family:var(--font);
+  opacity:0;transform:translateY(-4px);pointer-events:none;visibility:hidden;transition:opacity .15s,transform .15s,visibility 0s .15s}
+.menu.open .menu-panel{opacity:1;transform:none;pointer-events:auto;visibility:visible;transition:opacity .15s,transform .15s}
+.menu-sec{padding:4px 0}
+.menu-sec+.menu-sec{border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
+.menu-label{display:block;font:500 12px/1 var(--font);color:var(--muted);padding:8px 10px 6px}
+.menu-nav{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.menu-nav li{margin:0}
+.menu-nav a{display:block;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14.5px;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-nav a:hover{background:var(--surface-2);text-decoration:none;color:var(--ink)}
+.menu-nav a[aria-current="page"]{background:var(--surface-2);font-weight:600}
+.menu-nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.menu-theme{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin:2px 4px 4px;padding:3px;border-radius:9px;background:var(--surface-2)}
+.menu-theme button{font:500 13.5px/1 var(--font);color:var(--ink-2);background:transparent;border:0;border-radius:7px;padding:9px 0;cursor:pointer;transition:background .15s,color .15s}
+.menu-theme button:hover{color:var(--ink)}
+.menu-theme button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(20,20,19,.12)}
+.menu-theme button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* keep page content clear of the button when the margin is narrow */
+@media (max-width:959px){header.top .wrap{padding-top:72px!important}}
+@media print{.menu{display:none}}
+</style>
+</head>
+<body>
+<div class="menu"><button type="button" class="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="site-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="menu-panel" id="site-menu"><div class="menu-sec"><span class="menu-label">Pages</span><ul class="menu-nav"><li><a href="../index.html" title="Home">Home</a></li><li><a href="../Week%201/Week%201%20-%20Introduction%20to%20AI.html" title="Week 1 – Introduction to artificial intelligence">Week 1 – Introduction to artificial intelligence</a></li><li><a href="../Week%202/Week%202%20-%20Search.html" title="Week 2 – Uninformed and informed search">Week 2 – Uninformed and informed search</a></li><li><a href="../Week%203/Week%203%20-%20Adversarial%20Games.html" title="Week 3 – Adversarial search and games" aria-current="page">Week 3 – Adversarial search and games</a></li></ul></div><div class="menu-sec"><span class="menu-label">Theme</span><div class="menu-theme" role="group" aria-label="Theme"><button type="button" data-theme-opt="light" aria-pressed="true">Light</button><button type="button" data-theme-opt="dark" aria-pressed="false">Dark</button><button type="button" data-theme-opt="system" aria-pressed="false">System</button></div></div></div></div><script>
+(function(){
+var menu=document.querySelector('.menu'); if(!menu) return;
+var btn=menu.querySelector('.menu-btn'), panel=menu.querySelector('.menu-panel');
+function setOpen(o){menu.classList.toggle('open',o);btn.setAttribute('aria-expanded',String(o));if(o){var f=panel.querySelector('a,button');f&&f.focus();}}
+btn.addEventListener('click',function(e){e.stopPropagation();setOpen(!menu.classList.contains('open'))});
+document.addEventListener('click',function(e){if(!menu.contains(e.target))setOpen(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.classList.contains('open')){setOpen(false);btn.focus();}});
+var K='applied-ai-theme',root=document.documentElement,opts=menu.querySelectorAll('[data-theme-opt]');
+function get(){try{var t=localStorage.getItem(K);return t==='dark'||t==='system'?t:'light'}catch(e){return 'light'}}
+function apply(t){if(t==='light')root.removeAttribute('data-theme');else root.setAttribute('data-theme',t);
+  opts.forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-theme-opt')===t))});}
+opts.forEach(function(b){b.addEventListener('click',function(){var t=b.getAttribute('data-theme-opt');
+  try{if(t==='light')localStorage.removeItem(K);else localStorage.setItem(K,t)}catch(e){}apply(t)})});
+apply(get());
+})();
+</script>
+<header class="top"><div class="wrap">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Applied AI</a></li><li><svg class="bc-sep" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg><span aria-current="page">Week 3</span></li></ol></nav>
+  <h1>Adversarial search and games</h1>
+</div></header>
+<div class="wrap layout">
+  <main>
+<section id="overview"><details class="sec" open><summary><h2>Overview</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>Ordinary search assumes we are the only one making moves. In a <strong>game</strong> there is an opponent working against us, so we need <strong>adversarial search</strong>. The core method is the <strong>minimax</strong> algorithm, made faster by <strong>alpha-beta pruning</strong>. Real programs also have to cope with time limits, with <strong>chance</strong>, and with <strong>hidden information</strong>.</p>
+</div></details></section>
+<section id="types"><details class="sec" open><summary><h2>Kinds of games</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>Games differ in several ways:</p>
+<ul>
+  <li><b>Deterministic or chance-based:</b> does luck, such as a dice roll, play a part?</li>
+  <li><b>Number of players:</b> one, two or more.</li>
+  <li><b>Zero-sum or cooperative:</b> is one player's gain always the other's loss, or can players work together?</li>
+  <li><b>Perfect or imperfect information:</b> can every player see the whole game, or is something hidden?</li>
+</ul>
+<p>Whatever the type, we need an algorithm that picks the next move in every position.</p>
+<div class="table-wrap"><table>
+<tr><th></th><th>No chance</th><th>Chance</th></tr>
+<tr><th>Everything visible</th><td>Chess, checkers, Go, Othello</td><td>Backgammon, Monopoly</td></tr>
+<tr><th>Something hidden</th><td>Battleships, tic-tac-toe played blind</td><td>Bridge, poker, Scrabble, nuclear war</td></tr>
+</table></div>
+
+<h3>Two-player zero-sum games</h3>
+<p>These are the games AI has studied most, such as tic-tac-toe, chess and Go. They have five features:</p>
+<ul>
+  <li><b>No chance:</b> nothing is random.</li>
+  <li><b>Two players:</b> called <b>MAX</b> and <b>MIN</b>.</li>
+  <li><b>Taking turns:</b> one player moves, then the other.</li>
+  <li><b>Everything visible:</b> both players always know the full state of the game.</li>
+  <li><b>Zero-sum:</b> whatever is good for one player is equally bad for the other.</li>
+</ul>
+<p>MAX and MIN each try to find a strategy that leads to a win.</p>
+</div></details></section>
+<section id="vs-search"><details class="sec" open><summary><h2>How games differ from ordinary search</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<div class="cols">
+<div class="card"><h4>The opponent is unpredictable</h4>A fixed list of moves is not enough. The answer has to be a <b>strategy</b>: a move ready for every reply the opponent might make.</div>
+<div class="card"><h4>Time is limited</h4>There is rarely time to search all the way to the end of the game, so the program has to make good guesses.</div>
+</div>
+<h3>A brief history</h3>
+<ul class="timeline">
+  <li><span class="yrs">1846</span>Charles Babbage considers how a machine could look ahead through possible moves.</li>
+  <li><span class="yrs">1912 and 1944</span>Ernst Zermelo, and later John von Neumann, describe an algorithm for perfect play.</li>
+  <li><span class="yrs">1950</span>Claude Shannon writes the first paper on computer chess, proposing a limited look-ahead and an estimate of each position.</li>
+  <li><span class="yrs">1951</span>Alan Turing writes the first chess program, worked through by hand.</li>
+  <li><span class="yrs">1952–1957</span>Arthur Samuel uses machine learning to improve how his checkers program judges positions.</li>
+  <li><span class="yrs">1956</span>John McCarthy suggests pruning, so the program can search deeper.</li>
+</ul>
+<h3>The AI behind Deep Blue</h3>
+<p>IBM's chess computer <b>Deep Blue</b> lost its first match against world champion <b>Garry Kasparov</b> in February 1996, by 4 games to 2. It won the rematch in 1997, the first time a computer beat a reigning world champion in a match. At its core was <b>minimax search with alpha-beta pruning</b>, together with a very detailed way of judging positions and purpose-built hardware.</p>
+<h3>Game trees</h3>
+<p>A <b>game tree</b> shows every possible sequence of moves. In a two-player game its levels alternate between MAX's turn and MIN's turn. In tic-tac-toe the top of the tree is the empty board. MAX, playing X, has 9 possible first moves, MIN has 8 replies to each, and so on down to the finished games. Each finished game is scored −1 for a loss, 0 for a draw or +1 for a win, from MAX's point of view.</p>
+</div></details></section>
+<section id="formal"><details class="sec" open><summary><h2>Describing a game precisely</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>To search a game, we describe it with six parts:</p>
+<dl class="terms">
+  <dt>Starting state</dt><dd>How the game is set up at the beginning. It is written S<sub>0</sub>.</dd>
+  <dt>PLAYER(s)</dt><dd>Whose turn it is in state s.</dd>
+  <dt>ACTIONS(s)</dt><dd>The legal moves in state s.</dd>
+  <dt>RESULT(s, a)</dt><dd>The state you get by making move a in state s.</dd>
+  <dt>TERMINAL-TEST(s)</dt><dd>Whether the game is over in state s. States where it is over are called <b>terminal states</b>.</dd>
+  <dt>UTILITY(s, p)</dt><dd>The final score for player p when the game ends in state s. In chess, for example, a win scores 1, a loss 0 and a draw ½.</dd>
+</dl>
+</div></details></section>
+<section id="minimax"><details class="sec" open><summary><h2>The minimax algorithm</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p><b>Minimax plays perfectly in two-player games with no chance and nothing hidden.</b></p>
+<div class="callout key"><strong>Key point</strong>Choose the move that leads to the position with the highest <b>minimax value</b>: the best score you can guarantee, assuming the opponent also plays as well as possible.</div>
+<figure class="diagram"><div class="scroll"><svg style="min-width:320px;max-width:627px" viewBox="0 0 570 292" xmlns="http://www.w3.org/2000/svg" role="img"><line class="edge hi" x1="285" y1="58" x2="111" y2="118"/><text class="elabel" x="190" y="88" text-anchor="end">a1</text><line class="edge" x1="285" y1="58" x2="285" y2="118"/><text class="elabel" x="293" y="88" text-anchor="start">a2</text><line class="edge" x1="285" y1="58" x2="459" y2="118"/><text class="elabel" x="380" y="88" text-anchor="start">a3</text><line class="edge hi" x1="111" y1="154" x2="53" y2="214"/><text class="elabel" x="74" y="184" text-anchor="end">a11</text><line class="edge" x1="111" y1="154" x2="111" y2="214"/><text class="elabel" x="119" y="184" text-anchor="start">a12</text><line class="edge" x1="111" y1="154" x2="169" y2="214"/><text class="elabel" x="148" y="184" text-anchor="start">a13</text><line class="edge" x1="285" y1="154" x2="227" y2="214"/><text class="elabel" x="248" y="184" text-anchor="end">a21</text><line class="edge" x1="285" y1="154" x2="285" y2="214"/><text class="elabel" x="293" y="184" text-anchor="start">a22</text><line class="edge" x1="285" y1="154" x2="343" y2="214"/><text class="elabel" x="322" y="184" text-anchor="start">a23</text><line class="edge" x1="459" y1="154" x2="401" y2="214"/><text class="elabel" x="422" y="184" text-anchor="end">a31</text><line class="edge" x1="459" y1="154" x2="459" y2="214"/><text class="elabel" x="467" y="184" text-anchor="start">a32</text><line class="edge" x1="459" y1="154" x2="517" y2="214"/><text class="elabel" x="496" y="184" text-anchor="start">a33</text><g class="tn" data-x="285" data-y="40"><polygon class="n-max hi" points="285,20 261,57 309,57"/><text class="nval" x="285" y="50">3</text></g><g class="tn" data-x="111" data-y="136"><polygon class="n-min hi" points="87,119 135,119 111,156"/><text class="nval" x="111" y="135">3</text></g><g class="tn" data-x="53" data-y="232"><rect class="n-leaf hi" x="35" y="214" width="36" height="36" rx="3"/><text class="nval" x="53" y="237">3</text></g><g class="tn" data-x="111" data-y="232"><rect class="n-leaf" x="93" y="214" width="36" height="36" rx="3"/><text class="nval" x="111" y="237">12</text></g><g class="tn" data-x="169" data-y="232"><rect class="n-leaf" x="151" y="214" width="36" height="36" rx="3"/><text class="nval" x="169" y="237">8</text></g><g class="tn" data-x="285" data-y="136"><polygon class="n-min" points="261,119 309,119 285,156"/><text class="nval" x="285" y="135">2</text></g><g class="tn" data-x="227" data-y="232"><rect class="n-leaf" x="209" y="214" width="36" height="36" rx="3"/><text class="nval" x="227" y="237">2</text></g><g class="tn" data-x="285" data-y="232"><rect class="n-leaf" x="267" y="214" width="36" height="36" rx="3"/><text class="nval" x="285" y="237">4</text></g><g class="tn" data-x="343" data-y="232"><rect class="n-leaf" x="325" y="214" width="36" height="36" rx="3"/><text class="nval" x="343" y="237">6</text></g><g class="tn" data-x="459" data-y="136"><polygon class="n-min" points="435,119 483,119 459,156"/><text class="nval" x="459" y="135">2</text></g><g class="tn" data-x="401" data-y="232"><rect class="n-leaf" x="383" y="214" width="36" height="36" rx="3"/><text class="nval" x="401" y="237">14</text></g><g class="tn" data-x="459" data-y="232"><rect class="n-leaf" x="441" y="214" width="36" height="36" rx="3"/><text class="nval" x="459" y="237">5</text></g><g class="tn" data-x="517" data-y="232"><rect class="n-leaf" x="499" y="214" width="36" height="36" rx="3"/><text class="nval" x="517" y="237">2</text></g></svg></div><figcaption>Each MIN node takes the smallest value below it: 3, 2 and 2. MAX takes the largest of those, so the value at the top is 3 and MAX plays a1.<span class="legend">Up triangle: MAX's turn. Down triangle: MIN's turn. Square: final score.</span></figcaption></figure>
+<p><b>How to read the tree:</b></p>
+<ul>
+  <li>A triangle pointing <b>up</b> is MAX's turn. MAX picks the <em>largest</em> value below it.</li>
+  <li>A triangle pointing <b>down</b> is MIN's turn. MIN picks the <em>smallest</em> value below it.</li>
+  <li>a1, a2 and so on are the moves. The value at the top is the largest of the smallest values.</li>
+</ul>
+<p>One move by one player is called a <b>ply</b>. This tree has two plies: one move by MAX, then one by MIN.</p>
+
+<h3>Pseudocode</h3>
+<pre><span class="kw">function</span> MINIMAX-DECISION(state) <span class="kw">returns</span> a move
+    <span class="kw">return</span> the move a in ACTIONS(state) with the highest MIN-VALUE(RESULT(state, a))
+
+<span class="kw">function</span> MAX-VALUE(state) <span class="kw">returns</span> a score
+    <span class="kw">if</span> TERMINAL-TEST(state) <span class="kw">then return</span> UTILITY(state)
+    v ← −∞
+    <span class="kw">for</span> each next state s <span class="kw">do</span> v ← MAX(v, MIN-VALUE(s))
+    <span class="kw">return</span> v
+
+<span class="kw">function</span> MIN-VALUE(state) <span class="kw">returns</span> a score
+    <span class="kw">if</span> TERMINAL-TEST(state) <span class="kw">then return</span> UTILITY(state)
+    v ← +∞
+    <span class="kw">for</span> each next state s <span class="kw">do</span> v ← MIN(v, MAX-VALUE(s))
+    <span class="kw">return</span> v</pre>
+<p>MAX-VALUE and MIN-VALUE call each other in turn. The search goes depth-first all the way down to finished games, then passes the scores back up the tree.</p>
+
+<h3>How minimax performs</h3>
+<div class="table-wrap"><table>
+<tr><th>Complete</th><td>Yes, if the tree is finite. Chess has rules to make sure games end.</td></tr>
+<tr><th>Optimal</th><td>Yes, against an opponent who also plays perfectly. Against a weaker opponent MAX still does at least as well, but a different strategy might take advantage of the opponent's mistakes.</td></tr>
+<tr><th>Time</th><td>O(b<sup>m</sup>)</td></tr>
+<tr><th>Memory</th><td>O(bm), because the search is depth-first</td></tr>
+</table></div>
+<div class="callout key"><strong>Key point</strong><b>Minimax is too slow for real games.</b> In chess there are about 35 moves to choose from in each position, and a typical game lasts about 100 plies. Searching every possibility is completely impossible. Do we really need to look at every path?</div>
+</div></details></section>
+<section id="alphabeta"><details class="sec" open><summary><h2>Alpha-beta pruning</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>The number of positions minimax must look at grows exponentially with the depth of the tree. We cannot remove that growth, but in the best case we can halve the exponent.</p>
+<dl class="terms">
+  <dt>Alpha (α)</dt><dd>The best score MAX is already guaranteed somewhere higher up the tree. MAX will not accept anything lower.</dd>
+  <dt>Beta (β)</dt><dd>The best score MIN is already guaranteed somewhere higher up the tree. MIN will not allow anything higher.</dd>
+</dl>
+<ul>
+  <li>Alpha-beta pruning can skip single positions and <b>whole branches</b> of the tree.</li>
+  <li><b>It never changes the value at the top of the tree.</b></li>
+  <li>The branches it skips could not have changed the decision, so looking at them would have wasted time.</li>
+</ul>
+<h3>Worked example</h3>
+<figure class="diagram"><div class="scroll"><svg style="min-width:320px;max-width:627px" viewBox="0 0 570 292" xmlns="http://www.w3.org/2000/svg" role="img"><line class="edge hi" x1="285" y1="58" x2="111" y2="118"/><text class="elabel" x="190" y="88" text-anchor="end">a1</text><line class="edge" x1="285" y1="58" x2="285" y2="118"/><text class="elabel" x="293" y="88" text-anchor="start">a2</text><line class="edge" x1="285" y1="58" x2="459" y2="118"/><text class="elabel" x="380" y="88" text-anchor="start">a3</text><line class="edge" x1="111" y1="154" x2="53" y2="214"/><line class="edge" x1="111" y1="154" x2="111" y2="214"/><line class="edge" x1="111" y1="154" x2="169" y2="214"/><line class="edge" x1="285" y1="154" x2="227" y2="214"/><line class="edge pruned" x1="285" y1="154" x2="285" y2="214"/><line class="edge pruned" x1="285" y1="154" x2="343" y2="214"/><line class="edge" x1="459" y1="154" x2="401" y2="214"/><line class="edge" x1="459" y1="154" x2="459" y2="214"/><line class="edge" x1="459" y1="154" x2="517" y2="214"/><g class="tn" data-x="285" data-y="40"><polygon class="n-max hi" points="285,20 261,57 309,57"/><text class="nval" x="285" y="50">3</text></g><g class="tn" data-x="111" data-y="136"><polygon class="n-min hi" points="87,119 135,119 111,156"/><text class="nval" x="111" y="135">3</text></g><g class="tn" data-x="53" data-y="232"><rect class="n-leaf" x="35" y="214" width="36" height="36" rx="3"/><text class="nval" x="53" y="237">3</text></g><g class="tn" data-x="111" data-y="232"><rect class="n-leaf" x="93" y="214" width="36" height="36" rx="3"/><text class="nval" x="111" y="237">12</text></g><g class="tn" data-x="169" data-y="232"><rect class="n-leaf" x="151" y="214" width="36" height="36" rx="3"/><text class="nval" x="169" y="237">8</text></g><g class="tn" data-x="285" data-y="136"><polygon class="n-min" points="261,119 309,119 285,156"/><text class="nval" x="285" y="135">≤2</text></g><g class="tn" data-x="227" data-y="232"><rect class="n-leaf" x="209" y="214" width="36" height="36" rx="3"/><text class="nval" x="227" y="237">2</text></g><g class="tn" data-x="285" data-y="232"><rect class="n-leaf pruned" x="267" y="214" width="36" height="36" rx="3"/><text class="nval" x="285" y="237">?</text><text class="xmark" x="285" y="266">skipped</text></g><g class="tn" data-x="343" data-y="232"><rect class="n-leaf pruned" x="325" y="214" width="36" height="36" rx="3"/><text class="nval" x="343" y="237">?</text><text class="xmark" x="343" y="266">skipped</text></g><g class="tn" data-x="459" data-y="136"><polygon class="n-min" points="435,119 483,119 459,156"/><text class="nval" x="459" y="135">2</text></g><g class="tn" data-x="401" data-y="232"><rect class="n-leaf" x="383" y="214" width="36" height="36" rx="3"/><text class="nval" x="401" y="237">14</text></g><g class="tn" data-x="459" data-y="232"><rect class="n-leaf" x="441" y="214" width="36" height="36" rx="3"/><text class="nval" x="459" y="237">5</text></g><g class="tn" data-x="517" data-y="232"><rect class="n-leaf" x="499" y="214" width="36" height="36" rx="3"/><text class="nval" x="517" y="237">2</text></g></svg></div><figcaption>The same tree with alpha-beta pruning. After seeing the 2 under a2, MAX knows that move is worth at most 2, worse than the 3 it can already get from a1. The last two values under a2 are never looked at. The value at the top is still 3.<span class="legend">Up triangle: MAX's turn. Down triangle: MIN's turn. Square: final score.</span></figcaption></figure>
+<div class="table-wrap"><table>
+<tr><th class="c">Step</th><th>What happens</th></tr>
+<tr><td class="c">1</td><td>Look at move a1. The first value is 3, so this MIN node is worth at most 3. The next values are 12 and 8, which MIN would not choose, so the node is worth exactly <b>3</b>. MAX is now guaranteed at least 3, so alpha becomes 3.</td></tr>
+<tr><td class="c">2</td><td>Look at move a2. The first value is <b>2</b>, so this MIN node is worth at most 2. MAX already has 3 from a1 and will never choose a2, so the other two values are <b>skipped</b>.</td></tr>
+<tr><td class="c">3</td><td>Look at move a3. The first value is 14, so the node is worth at most 14. That is still better than 3, so keep looking.</td></tr>
+<tr><td class="c">4</td><td>The next value is 5, so the node is worth at most 5. That is still better than 3, so keep looking.</td></tr>
+<tr><td class="c">5</td><td>The last value is 2, so the node is worth <b>2</b>. The top of the tree is the largest of 3, at most 2, and 2, which is <b>3</b>. MAX plays a1.</td></tr>
+</table></div>
+
+<h3>The algorithm</h3>
+<pre><span class="kw">function</span> ALPHA-BETA-DECISION(state) <span class="kw">returns</span> a move
+    v ← MAX-VALUE(state, −∞, +∞)
+    <span class="kw">return</span> the move in ACTIONS(state) whose value is v
+
+<span class="kw">function</span> MAX-VALUE(state, α, β) <span class="kw">returns</span> a score
+    <span class="kw">if</span> TERMINAL-TEST(state) <span class="kw">then return</span> UTILITY(state)
+    v ← −∞
+    <span class="kw">for</span> each next state s <span class="kw">do</span>
+        v ← MAX(v, MIN-VALUE(s, α, β))
+        <span class="kw">if</span> v ≥ β <span class="kw">then return</span> v           <span class="cm">; MIN higher up will never allow this, so stop</span>
+        α ← MAX(α, v)
+    <span class="kw">return</span> v
+
+<span class="kw">function</span> MIN-VALUE(state, α, β) <span class="kw">returns</span> a score
+    <span class="kw">if</span> TERMINAL-TEST(state) <span class="kw">then return</span> UTILITY(state)
+    v ← +∞
+    <span class="kw">for</span> each next state s <span class="kw">do</span>
+        v ← MIN(v, MAX-VALUE(s, α, β))
+        <span class="kw">if</span> v ≤ α <span class="kw">then return</span> v           <span class="cm">; MAX higher up already has something better, so stop</span>
+        β ← MIN(β, v)
+    <span class="kw">return</span> v</pre>
+
+<h3>How alpha-beta pruning performs</h3>
+<ul>
+  <li><b>The result is always the same as plain minimax.</b></li>
+  <li><b>Looking at the best moves first lets it skip more.</b> If the moves are in the perfect order, the time drops to O(b<sup>m/2</sup>), which means it can search twice as deep in the same time.</li>
+  <li>It is a simple example of a program reasoning about which calculations are worth doing.</li>
+  <li>Even so, 35<sup>50</sup> positions is still far too many.</li>
+</ul>
+<div class="callout good"><strong>Good to know</strong>If the moves are in a random order, alpha-beta pruning looks at roughly O(b<sup>3m/4</sup>) positions. Real programs try the most promising moves first, such as captures, or the moves that were best in a shallower search, to get close to the ideal O(b<sup>m/2</sup>).</div>
+</div></details></section>
+<section id="limits"><details class="sec" open><summary><h2>Coping with time limits</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>Real games have time limits, so the program cannot search to the end of the game. The usual approach is:</p>
+<ul>
+  <li><b>Stop early:</b> replace the test for the end of the game with a <b>cutoff test</b>, such as a depth limit.</li>
+  <li><b>Estimate instead of scoring:</b> replace the final score with an <b>evaluation function</b> that estimates how good the position is.</li>
+</ul>
+<div class="callout key"><strong>Key point</strong><b>How deep can a program look?</b> Suppose a program has 100 seconds per move and can examine 10,000 positions a second. That gives 1 million positions per move, which is about 35<sup>8/2</sup>. With alpha-beta pruning it can look 8 plies ahead, which makes a fairly good chess program.</div>
+
+<h3>Evaluation functions</h3>
+<p>In chess, a position is usually judged by adding up weighted features:</p>
+<pre>Eval(s) = w<sub>1</sub>f<sub>1</sub>(s) + w<sub>2</sub>f<sub>2</sub>(s) + … + w<sub>n</sub>f<sub>n</sub>(s)</pre>
+<p>For example, w<sub>1</sub> = 9 and f<sub>1</sub>(s) = the number of white queens minus the number of black queens.</p>
+<p>Counting pieces is not enough on its own. Two positions can have exactly the same pieces on the board, yet in one of them one side is clearly winning because of where the pieces stand or whose turn it is. A good evaluation therefore needs to capture more than the material on the board.</p>
+<div class="callout good"><strong>Good to know</strong>Typical piece values are a pawn 1, a knight or bishop 3, a rook 5 and a queen 9. Programs also weigh king safety, pawn structure and how freely pieces can move. One known problem with stopping at a fixed depth is the <b>horizon effect</b>: a disaster can be pushed just past the depth limit, where the program cannot see it. A common fix is to keep searching positions where captures are still pending, until things settle down.</div>
+
+<h3>Computers against human champions</h3>
+<div class="table-wrap"><table>
+<tr><th>Game</th><th>What happened</th></tr>
+<tr><td><b>Checkers</b></td><td>In 1994, the program <b>Chinook</b> ended the 40-year reign of world champion Marion Tinsley. It used a database of perfect play for every position with 8 or fewer pieces, which is 443,748,401,247 positions.</td></tr>
+<tr><td><b>Chess</b></td><td>In 1997, <b>Deep Blue</b> beat world champion Garry Kasparov in a six-game match. It examined 200 million positions a second, judged positions in great detail, and used undisclosed methods to look as far as 40 plies ahead along some lines.</td></tr>
+<tr><td><b>Othello</b></td><td>Human champions refuse to play computers, because the computers are too good.</td></tr>
+<tr><td><b>Go</b></td><td>For a long time computers were far too weak to challenge strong human players. Go has more than 300 possible moves per position, so programs relied on libraries of known patterns. Deep learning changed everything: DeepMind's <b>AlphaGo</b> beat the European champion Fan Hui in 2015 and the world-class player Lee Sedol in 2016.</td></tr>
+</table></div>
+<div class="callout good"><strong>Good to know</strong><b>A correction.</b> The slides say that before 2017 human champions refused to play Go against computers because the computers were too weak. In fact AlphaGo had already beaten Fan Hui in 2015 and Lee Sedol in 2016. Also, of these games only checkers has been <b>solved</b>, meaning its result with perfect play is known: in 2007 it was proved that perfect play by both sides gives a draw. Chinook's 1994 success was a victory over a champion, not a solution of the game.</div>
+</div></details></section>
+<section id="chance"><details class="sec" open><summary><h2>Games of chance</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>In games such as backgammon, chance comes from dice or shuffled cards. The game tree gains <b>chance nodes</b> between the players' turns. Each branch from a chance node is one possible roll or deal, with a probability.</p>
+<figure class="diagram"><div class="scroll"><svg style="min-width:320px;max-width:528px" viewBox="0 0 480 370" xmlns="http://www.w3.org/2000/svg" role="img"><line class="edge hi" x1="240" y1="58" x2="132" y2="112"/><line class="edge" x1="240" y1="58" x2="348" y2="112"/><line class="edge" x1="132" y1="148" x2="78" y2="202"/><text class="elabel" x="97" y="175" text-anchor="end">0.5</text><line class="edge" x1="132" y1="148" x2="186" y2="202"/><text class="elabel" x="167" y="175" text-anchor="start">0.5</text><line class="edge" x1="78" y1="238" x2="51" y2="292"/><line class="edge" x1="78" y1="238" x2="105" y2="292"/><line class="edge" x1="186" y1="238" x2="159" y2="292"/><line class="edge" x1="186" y1="238" x2="213" y2="292"/><line class="edge" x1="348" y1="148" x2="294" y2="202"/><text class="elabel" x="313" y="175" text-anchor="end">0.5</text><line class="edge" x1="348" y1="148" x2="402" y2="202"/><text class="elabel" x="383" y="175" text-anchor="start">0.5</text><line class="edge" x1="294" y1="238" x2="267" y2="292"/><line class="edge" x1="294" y1="238" x2="321" y2="292"/><line class="edge" x1="402" y1="238" x2="375" y2="292"/><line class="edge" x1="402" y1="238" x2="429" y2="292"/><g class="tn" data-x="240" data-y="40"><polygon class="n-max hi" points="240,20 216,57 264,57"/><text class="nval" x="240" y="50">3</text></g><g class="tn" data-x="132" data-y="130"><circle class="n-chance hi" cx="132" cy="130" r="19"/><text class="nval" x="132" y="135">3</text></g><g class="tn" data-x="78" data-y="220"><polygon class="n-min" points="54,203 102,203 78,240"/><text class="nval" x="78" y="219">2</text></g><g class="tn" data-x="51" data-y="310"><rect class="n-leaf" x="33" y="292" width="36" height="36" rx="3"/><text class="nval" x="51" y="315">2</text></g><g class="tn" data-x="105" data-y="310"><rect class="n-leaf" x="87" y="292" width="36" height="36" rx="3"/><text class="nval" x="105" y="315">4</text></g><g class="tn" data-x="186" data-y="220"><polygon class="n-min" points="162,203 210,203 186,240"/><text class="nval" x="186" y="219">4</text></g><g class="tn" data-x="159" data-y="310"><rect class="n-leaf" x="141" y="292" width="36" height="36" rx="3"/><text class="nval" x="159" y="315">7</text></g><g class="tn" data-x="213" data-y="310"><rect class="n-leaf" x="195" y="292" width="36" height="36" rx="3"/><text class="nval" x="213" y="315">4</text></g><g class="tn" data-x="348" data-y="130"><circle class="n-chance" cx="348" cy="130" r="19"/><text class="nval" x="348" y="135">-1</text></g><g class="tn" data-x="294" data-y="220"><polygon class="n-min" points="270,203 318,203 294,240"/><text class="nval" x="294" y="219">0</text></g><g class="tn" data-x="267" data-y="310"><rect class="n-leaf" x="249" y="292" width="36" height="36" rx="3"/><text class="nval" x="267" y="315">6</text></g><g class="tn" data-x="321" data-y="310"><rect class="n-leaf" x="303" y="292" width="36" height="36" rx="3"/><text class="nval" x="321" y="315">0</text></g><g class="tn" data-x="402" data-y="220"><polygon class="n-min" points="378,203 426,203 402,240"/><text class="nval" x="402" y="219">-2</text></g><g class="tn" data-x="375" data-y="310"><rect class="n-leaf" x="357" y="292" width="36" height="36" rx="3"/><text class="nval" x="375" y="315">5</text></g><g class="tn" data-x="429" data-y="310"><rect class="n-leaf" x="411" y="292" width="36" height="36" rx="3"/><text class="nval" x="429" y="315">-2</text></g></svg></div><figcaption>Each chance outcome has a probability of 0.5. A chance node takes the weighted average of the values below it: 0.5 × 2 + 0.5 × 4 = 3, and 0.5 × 0 + 0.5 × (−2) = −1. MAX picks the left move, worth 3.<span class="legend">Up triangle: MAX's turn. Down triangle: MIN's turn. Square: final score. Circle: chance.</span></figcaption></figure>
+<h3>The algorithm</h3>
+<p><b>Expectiminimax plays perfectly in games of chance.</b> It works just like minimax, with one extra rule for chance nodes:</p>
+<pre>…
+<span class="kw">if</span> it is MAX's turn <span class="kw">then</span>
+    <span class="kw">return</span> the highest value of the next states
+<span class="kw">if</span> it is MIN's turn <span class="kw">then</span>
+    <span class="kw">return</span> the lowest value of the next states
+<span class="kw">if</span> it is a chance node <span class="kw">then</span>
+    <span class="kw">return</span> the average value of the next states, weighted by probability
+…</pre>
+<p>The weighted average is the <b>expected value</b>: multiply each outcome's value by its probability, then add them up.</p>
+<div class="callout good"><strong>Good to know</strong>Chance nodes make the tree much wider. Backgammon has 21 different dice rolls each turn, so searching deeply is very expensive. Also, because values are averaged, the actual numbers matter, not just which is bigger. Rescaling an evaluation function can change the move it picks.</div>
+</div></details></section>
+<section id="imperfect"><details class="sec" open><summary><h2>Games with hidden information</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>In card games, for example, you cannot see your opponent's cards.</p>
+<ul>
+  <li>We can usually work out a <b>probability for each possible deal</b>.</li>
+  <li>That makes it look like one big dice roll at the start of the game.</li>
+  <li><b>The idea:</b> work out the minimax value of each move for every possible deal, then choose the move with the <b>highest average value</b> across all the deals.</li>
+  <li><b>Bridge</b> programs approximate this by generating <b>100 deals</b> that fit the bidding so far, and choosing the move that wins the most tricks on average.</li>
+</ul>
+<div class="callout key"><strong>Key point</strong>Every game needs its own carefully chosen techniques. No single algorithm suits every game.</div>
+
+<h3>Games in practice</h3>
+<p>Computers now play many games at world-class level:</p>
+<ul>
+  <li><b>Scrabble:</b> the program Quackle beat a former world champion.</li>
+  <li><b>Poker:</b> <b>Libratus</b> beat four of the world's best players over a 20-day match of no-limit Texas hold'em. <b>Pluribus</b> later beat five players at the same table.</li>
+  <li><b>Backgammon:</b> <b>TD-Gammon</b> looks only two plies ahead but judges positions very well, and plays at world-champion level. It even changed how experts think the game should be played.</li>
+  <li><b>Video games:</b> in 2019, DeepMind's <b>AlphaStar</b>, built with deep learning and reinforcement learning, beat expert StarCraft II players 10 games to 1.</li>
+</ul>
+</div></details></section>
+<section id="summary"><details class="sec" open><summary><h2>Summary</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body">
+<p>Games are fun to work on, and the same ideas apply to dangerous real situations, such as nuclear standoffs. They teach several important lessons about AI:</p>
+<ul>
+  <li><b>Perfect play is out of reach</b>, so programs must make good approximations.</li>
+  <li>It pays to <b>think about what is worth thinking about</b>, as alpha-beta pruning does.</li>
+  <li><b>Uncertainty</b> limits how well we can score positions.</li>
+  <li><b>The best decision depends on what you know</b>, not on the true state of the game.</li>
+</ul>
+<p>A useful analogy: “Games are to AI as grand prix racing is to automobile design.” They are a demanding test bed that pushes forward techniques used far more widely.</p>
+<div class="table-wrap"><table>
+<tr><th>Method</th><th>When to use it</th><th>Main idea</th><th>Time</th></tr>
+<tr><td>Minimax</td><td>Two players, no chance, nothing hidden, one player's gain is the other's loss</td><td>MAX takes the largest value, MIN the smallest</td><td>O(b<sup>m</sup>)</td></tr>
+<tr><td>Alpha-beta pruning</td><td>The same games, but faster</td><td>Stop when v ≥ β on MAX's turn, or v ≤ α on MIN's turn</td><td>O(b<sup>m/2</sup>) at best</td></tr>
+<tr><td>Depth limit and evaluation</td><td>When time is limited</td><td>Eval(s) = w<sub>1</sub>f<sub>1</sub>(s) + … + w<sub>n</sub>f<sub>n</sub>(s)</td><td>O(b<sup>l</sup>)</td></tr>
+<tr><td>Expectiminimax</td><td>Games with chance</td><td>A chance node's value is the probability-weighted average</td><td>O(b<sup>m</sup>n<sup>m</sup>)</td></tr>
+<tr><td>Sampling deals</td><td>Games with hidden information</td><td>Average the minimax value over many possible deals</td><td>Depends on the number of deals</td></tr>
+</table></div>
+<p style="font-size:14px;color:var(--muted)">In the expectiminimax row, n is the number of different chance outcomes.</p>
+</div></details></section>
+<section id="quiz"><details class="sec"><summary><h2>Quiz</h2><span class="sec-chev" aria-hidden="true"></span></summary><div class="sec-body"><div class="quizbar"><div class="qb-row"><div><b class="qb-score">0</b> correct</div><div class="qb-l"><span class="qb-done">0</span> of 16 answered</div><button type="button" class="btn ghost qb-reset">Start over</button></div><div class="qb-track"><div class="qb-fill"></div></div><div class="qb-final" hidden></div></div><p class="q-intro">Only your first try at each question counts towards your score. You can retry the interactive questions as often as you like. Your progress is saved in this browser.</p><div class="q tv" id="w3-q1"><div class="q-meta"><span class="q-num">Question 1</span><span class="q-kind">Fill in the tree</span><span class="q-status"></span></div><p class="q-text">Fill in the <b>minimax value</b> of each MIN node and of the MAX node at the top.</p><div class="tv-fig"><div class="scroll"><svg style="max-width:627px;min-width:420px" viewBox="0 0 570 308" xmlns="http://www.w3.org/2000/svg" role="img"><line class="edge" x1="285" y1="67" x2="111" y2="117"/><text class="elabel" x="190" y="92" text-anchor="end">a1</text><line class="edge" x1="285" y1="67" x2="285" y2="117"/><text class="elabel" x="293" y="92" text-anchor="start">a2</text><line class="edge" x1="285" y1="67" x2="459" y2="117"/><text class="elabel" x="380" y="92" text-anchor="start">a3</text><line class="edge" x1="111" y1="171" x2="53" y2="228.2"/><line class="edge" x1="111" y1="171" x2="111" y2="228.2"/><line class="edge" x1="111" y1="171" x2="169" y2="228.2"/><line class="edge" x1="285" y1="171" x2="227" y2="228.2"/><line class="edge" x1="285" y1="171" x2="285" y2="228.2"/><line class="edge" x1="285" y1="171" x2="343" y2="228.2"/><line class="edge" x1="459" y1="171" x2="401" y2="228.2"/><line class="edge" x1="459" y1="171" x2="459" y2="228.2"/><line class="edge" x1="459" y1="171" x2="517" y2="228.2"/><g class="tn" data-x="285" data-y="40"><polygon class="n-max" points="285,10 249,65.5 321,65.5"/><foreignObject x="267" y="40" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="3" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="111" data-y="144"><polygon class="n-min" points="75,118.5 147,118.5 111,174"/><foreignObject x="93" y="122.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="3" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="53" data-y="248"><rect class="n-leaf" x="33.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="53" y="253">3</text></g><g class="tn" data-x="111" data-y="248"><rect class="n-leaf" x="91.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="111" y="253">12</text></g><g class="tn" data-x="169" data-y="248"><rect class="n-leaf" x="149.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="169" y="253">8</text></g><g class="tn" data-x="285" data-y="144"><polygon class="n-min" points="249,118.5 321,118.5 285,174"/><foreignObject x="267" y="122.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="2" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="227" data-y="248"><rect class="n-leaf" x="207.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="227" y="253">2</text></g><g class="tn" data-x="285" data-y="248"><rect class="n-leaf" x="265.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="285" y="253">4</text></g><g class="tn" data-x="343" data-y="248"><rect class="n-leaf" x="323.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="343" y="253">6</text></g><g class="tn" data-x="459" data-y="144"><polygon class="n-min" points="423,118.5 495,118.5 459,174"/><foreignObject x="441" y="122.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="2" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="401" data-y="248"><rect class="n-leaf" x="381.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="401" y="253">14</text></g><g class="tn" data-x="459" data-y="248"><rect class="n-leaf" x="439.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="459" y="253">5</text></g><g class="tn" data-x="517" data-y="248"><rect class="n-leaf" x="497.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="517" y="253">2</text></g></svg><p class="legend-inline">Up triangle: MAX's turn. Down triangle: MIN's turn. Type a number in each box. Negative numbers are fine.</p></div></div><div class="q-actions"><button type="button" class="btn primary check">Check answer</button><button type="button" class="btn ghost solve">Show solution</button><span class="q-msg"></span></div><div class="explain" hidden>Each MIN node takes the smallest value below it: <b>3</b>, <b>2</b> and <b>2</b>. MAX takes the largest of those, <b>3</b>, so MAX plays a1.</div></div><div class="q tv" id="w3-q2"><div class="q-meta"><span class="q-num">Question 2</span><span class="q-kind">Fill in the values and pick the skipped squares</span><span class="q-status"></span></div><p class="q-text">Fill in the minimax values. Then click every square that alpha-beta pruning would skip, working from left to right.</p><div class="tv-fig"><div class="scroll"><svg style="max-width:370px;min-width:300px" viewBox="0 0 336 308" xmlns="http://www.w3.org/2000/svg" role="img"><line class="edge" x1="168" y1="67" x2="96" y2="117"/><text class="elabel" x="124" y="92" text-anchor="end">a</text><line class="edge" x1="168" y1="67" x2="240" y2="117"/><text class="elabel" x="212" y="92" text-anchor="start">d</text><line class="edge" x1="96" y1="171" x2="60" y2="228.2"/><text class="elabel" x="70" y="199.6" text-anchor="end">b</text><line class="edge" x1="96" y1="171" x2="132" y2="228.2"/><text class="elabel" x="122" y="199.6" text-anchor="start">c</text><line class="edge" x1="240" y1="171" x2="204" y2="228.2"/><text class="elabel" x="214" y="199.6" text-anchor="end">e</text><line class="edge" x1="240" y1="171" x2="276" y2="228.2"/><text class="elabel" x="266" y="199.6" text-anchor="start">f</text><g class="tn" data-x="168" data-y="40"><polygon class="n-max" points="168,10 132,65.5 204,65.5"/><foreignObject x="150" y="40" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="8" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="96" data-y="144"><polygon class="n-min" points="60,118.5 132,118.5 96,174"/><foreignObject x="78" y="122.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="8" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn pick" data-x="60" data-y="248" data-ans="0" tabindex="0" role="button" aria-label="leaf 10"><rect class="n-leaf" x="40.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="60" y="253">10</text></g><g class="tn pick" data-x="132" data-y="248" data-ans="0" tabindex="0" role="button" aria-label="leaf 8"><rect class="n-leaf" x="112.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="132" y="253">8</text></g><g class="tn" data-x="240" data-y="144"><polygon class="n-min" points="204,118.5 276,118.5 240,174"/><foreignObject x="222" y="122.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="4" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn pick" data-x="204" data-y="248" data-ans="0" tabindex="0" role="button" aria-label="leaf 4"><rect class="n-leaf" x="184.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="204" y="253">4</text></g><g class="tn pick" data-x="276" data-y="248" data-ans="1" tabindex="0" role="button" aria-label="leaf 50"><rect class="n-leaf" x="256.2" y="228.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="276" y="253">50</text></g></svg><p class="legend-inline">Up triangle: MAX's turn. Down triangle: MIN's turn. Type a number in each box. Negative numbers are fine.</p></div></div><div class="q-actions"><button type="button" class="btn primary check">Check answer</button><button type="button" class="btn ghost solve">Show solution</button><span class="q-msg"></span></div><div class="explain" hidden>Values: under a, the smallest of 10 and 8 is <b>8</b>. Under d, the smallest of 4 and 50 is <b>4</b>. The top is the larger of 8 and 4, <b>8</b>, so MAX plays a.<br>Skipping: after a, MAX is guaranteed 8. Under d the first value is 4, so d is worth at most 4 and MAX will never choose it. The last square, <b>f</b>, is skipped.</div></div><div class="q tv" id="w3-q3"><div class="q-meta"><span class="q-num">Question 3</span><span class="q-kind">Fill in the values and pick the skipped squares</span><span class="q-status"></span></div><p class="q-text">Fill in the full minimax value of every triangle, ignoring pruning. Then click every square alpha-beta pruning would skip.</p><div class="tv-fig"><div class="scroll"><svg style="max-width:598px;min-width:420px" viewBox="0 0 544 400" xmlns="http://www.w3.org/2000/svg" role="img"><line class="edge" x1="272" y1="67" x2="148" y2="113"/><text class="elabel" x="202" y="90" text-anchor="end">a</text><line class="edge" x1="272" y1="67" x2="396" y2="113"/><text class="elabel" x="342" y="90" text-anchor="start">h</text><line class="edge" x1="148" y1="167" x2="86" y2="213"/><text class="elabel" x="109" y="190" text-anchor="end">b</text><line class="edge" x1="148" y1="167" x2="210" y2="213"/><text class="elabel" x="187" y="190" text-anchor="start">e</text><line class="edge" x1="86" y1="267" x2="55" y2="320.2"/><text class="elabel" x="62.5" y="293.6" text-anchor="end">c</text><line class="edge" x1="86" y1="267" x2="117" y2="320.2"/><text class="elabel" x="109.5" y="293.6" text-anchor="start">d</text><line class="edge" x1="210" y1="267" x2="179" y2="320.2"/><text class="elabel" x="186.5" y="293.6" text-anchor="end">f</text><line class="edge" x1="210" y1="267" x2="241" y2="320.2"/><text class="elabel" x="233.5" y="293.6" text-anchor="start">g</text><line class="edge" x1="396" y1="167" x2="334" y2="213"/><text class="elabel" x="357" y="190" text-anchor="end">i</text><line class="edge" x1="396" y1="167" x2="458" y2="213"/><text class="elabel" x="435" y="190" text-anchor="start">l</text><line class="edge" x1="334" y1="267" x2="303" y2="320.2"/><text class="elabel" x="310.5" y="293.6" text-anchor="end">j</text><line class="edge" x1="334" y1="267" x2="365" y2="320.2"/><text class="elabel" x="357.5" y="293.6" text-anchor="start">k</text><line class="edge" x1="458" y1="267" x2="427" y2="320.2"/><text class="elabel" x="434.5" y="293.6" text-anchor="end">m</text><line class="edge" x1="458" y1="267" x2="489" y2="320.2"/><text class="elabel" x="481.5" y="293.6" text-anchor="start">n</text><g class="tn" data-x="272" data-y="40"><polygon class="n-max" points="272,10 236,65.5 308,65.5"/><foreignObject x="254" y="40" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="10" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="148" data-y="140"><polygon class="n-min" points="112,114.5 184,114.5 148,170"/><foreignObject x="130" y="118.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="10" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="86" data-y="240"><polygon class="n-max" points="86,210 50,265.5 122,265.5"/><foreignObject x="68" y="240" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="10" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn pick" data-x="55" data-y="340" data-ans="0" tabindex="0" role="button" aria-label="leaf 10"><rect class="n-leaf" x="35.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="55" y="345">10</text></g><g class="tn pick" data-x="117" data-y="340" data-ans="0" tabindex="0" role="button" aria-label="leaf 6"><rect class="n-leaf" x="97.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="117" y="345">6</text></g><g class="tn" data-x="210" data-y="240"><polygon class="n-max" points="210,210 174,265.5 246,265.5"/><foreignObject x="192" y="240" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="100" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn pick" data-x="179" data-y="340" data-ans="0" tabindex="0" role="button" aria-label="leaf 100"><rect class="n-leaf" x="159.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="179" y="345">100</text></g><g class="tn pick" data-x="241" data-y="340" data-ans="1" tabindex="0" role="button" aria-label="leaf 8"><rect class="n-leaf" x="221.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="241" y="345">8</text></g><g class="tn" data-x="396" data-y="140"><polygon class="n-min" points="360,114.5 432,114.5 396,170"/><foreignObject x="378" y="118.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="2" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="334" data-y="240"><polygon class="n-max" points="334,210 298,265.5 370,265.5"/><foreignObject x="316" y="240" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="2" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn pick" data-x="303" data-y="340" data-ans="0" tabindex="0" role="button" aria-label="leaf 1"><rect class="n-leaf" x="283.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="303" y="345">1</text></g><g class="tn pick" data-x="365" data-y="340" data-ans="0" tabindex="0" role="button" aria-label="leaf 2"><rect class="n-leaf" x="345.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="365" y="345">2</text></g><g class="tn" data-x="458" data-y="240"><polygon class="n-max" points="458,210 422,265.5 494,265.5"/><foreignObject x="440" y="240" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="20" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn pick" data-x="427" data-y="340" data-ans="1" tabindex="0" role="button" aria-label="leaf 20"><rect class="n-leaf" x="407.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="427" y="345">20</text></g><g class="tn pick" data-x="489" data-y="340" data-ans="1" tabindex="0" role="button" aria-label="leaf 4"><rect class="n-leaf" x="469.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="489" y="345">4</text></g></svg><p class="legend-inline">Up triangle: MAX's turn. Down triangle: MIN's turn. Type a number in each box. Negative numbers are fine.</p></div></div><div class="q-actions"><button type="button" class="btn primary check">Check answer</button><button type="button" class="btn ghost solve">Show solution</button><span class="q-msg"></span></div><div class="explain" hidden>Values: b is the larger of 10 and 6, so 10. e is the larger of 100 and 8, so 100. a is the smaller of those, <b>10</b>. i is 2 and l is 20, so h is <b>2</b>. The top is <b>10</b>, so MAX plays a.<br>Skipping: after b, MIN at a will allow at most 10. Under e the first value is 100, which MIN will never allow, so <b>g</b> is skipped. MAX is now guaranteed 10. Under h, branch i gives 2, so h is worth at most 2 and MAX will not choose it. The whole of branch l, squares <b>m</b> and <b>n</b>, is skipped.</div></div><div class="q tv" id="w3-q4"><div class="q-meta"><span class="q-num">Question 4</span><span class="q-kind">Fill in the tree</span><span class="q-status"></span></div><p class="q-text"><b>A game with chance.</b> Fill in every value. The circles are chance nodes, and each outcome has a probability of 0.5.</p><div class="tv-fig"><div class="scroll"><svg style="max-width:563px;min-width:420px" viewBox="0 0 512 400" xmlns="http://www.w3.org/2000/svg" role="img"><line class="edge" x1="256" y1="67" x2="140" y2="113"/><line class="edge" x1="256" y1="67" x2="372" y2="113"/><line class="edge" x1="140" y1="167" x2="82" y2="213"/><text class="elabel" x="103" y="190" text-anchor="end">0.5</text><line class="edge" x1="140" y1="167" x2="198" y2="213"/><text class="elabel" x="177" y="190" text-anchor="start">0.5</text><line class="edge" x1="82" y1="267" x2="53" y2="320.2"/><line class="edge" x1="82" y1="267" x2="111" y2="320.2"/><line class="edge" x1="198" y1="267" x2="169" y2="320.2"/><line class="edge" x1="198" y1="267" x2="227" y2="320.2"/><line class="edge" x1="372" y1="167" x2="314" y2="213"/><text class="elabel" x="335" y="190" text-anchor="end">0.5</text><line class="edge" x1="372" y1="167" x2="430" y2="213"/><text class="elabel" x="409" y="190" text-anchor="start">0.5</text><line class="edge" x1="314" y1="267" x2="285" y2="320.2"/><line class="edge" x1="314" y1="267" x2="343" y2="320.2"/><line class="edge" x1="430" y1="267" x2="401" y2="320.2"/><line class="edge" x1="430" y1="267" x2="459" y2="320.2"/><g class="tn" data-x="256" data-y="40"><polygon class="n-max" points="256,10 220,65.5 292,65.5"/><foreignObject x="238" y="40" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="3" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="140" data-y="140"><circle class="n-chance" cx="140" cy="140" r="28.5"/><foreignObject x="122" y="129" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="3" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="82" data-y="240"><polygon class="n-min" points="46,214.5 118,214.5 82,270"/><foreignObject x="64" y="218.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="2" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="53" data-y="340"><rect class="n-leaf" x="33.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="53" y="345">2</text></g><g class="tn" data-x="111" data-y="340"><rect class="n-leaf" x="91.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="111" y="345">4</text></g><g class="tn" data-x="198" data-y="240"><polygon class="n-min" points="162,214.5 234,214.5 198,270"/><foreignObject x="180" y="218.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="4" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="169" data-y="340"><rect class="n-leaf" x="149.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="169" y="345">7</text></g><g class="tn" data-x="227" data-y="340"><rect class="n-leaf" x="207.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="227" y="345">4</text></g><g class="tn" data-x="372" data-y="140"><circle class="n-chance" cx="372" cy="140" r="28.5"/><foreignObject x="354" y="129" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="-1" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="314" data-y="240"><polygon class="n-min" points="278,214.5 350,214.5 314,270"/><foreignObject x="296" y="218.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="0" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="285" data-y="340"><rect class="n-leaf" x="265.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="285" y="345">6</text></g><g class="tn" data-x="343" data-y="340"><rect class="n-leaf" x="323.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="343" y="345">0</text></g><g class="tn" data-x="430" data-y="240"><polygon class="n-min" points="394,214.5 466,214.5 430,270"/><foreignObject x="412" y="218.5" width="36" height="22"><input xmlns="http://www.w3.org/1999/xhtml" class="tin" data-answer="-2" inputmode="text" autocomplete="off" aria-label="value"/></foreignObject></g><g class="tn" data-x="401" data-y="340"><rect class="n-leaf" x="381.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="401" y="345">5</text></g><g class="tn" data-x="459" data-y="340"><rect class="n-leaf" x="439.2" y="320.2" width="39.6" height="39.6" rx="3"/><text class="nval" x="459" y="345">-2</text></g></svg><p class="legend-inline">Up triangle: MAX's turn. Down triangle: MIN's turn. Type a number in each box. Negative numbers are fine.</p></div></div><div class="q-actions"><button type="button" class="btn primary check">Check answer</button><button type="button" class="btn ghost solve">Show solution</button><span class="q-msg"></span></div><div class="explain" hidden>MIN values: 2, 4, 0 and −2. Chance values: 0.5 × 2 + 0.5 × 4 = <b>3</b>, and 0.5 × 0 + 0.5 × (−2) = <b>−1</b>. The top is the larger of 3 and −1, <b>3</b>.</div></div><div class="q mcq" id="w3-q5" data-answer="0"><div class="q-meta"><span class="q-num">Question 5</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">What does <b>zero-sum</b> mean?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>One player's gain is exactly the other's loss</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>Nothing is left to chance</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>Both players can win at once</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>The game always ends in a draw</span></button></div><div class="explain" hidden>In a zero-sum game, whatever is good for one player is equally bad for the other, so a single score describes the result for both.</div></div><div class="q mcq" id="w3-q6" data-answer="1"><div class="q-meta"><span class="q-num">Question 6</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">How does the time minimax needs grow?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>O(b<sup>m/2</sup>)</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>O(b<sup>m</sup>)</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>O(m<sup>b</sup>)</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>O(bm)</span></button></div><div class="explain" hidden>Minimax looks at the whole tree, so its time is O(b<sup>m</sup>). Because it searches depth-first, its memory is only O(bm).</div></div><div class="q mcq" id="w3-q7" data-answer="0"><div class="q-meta"><span class="q-num">Question 7</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">If the moves are in the perfect order, how much time does alpha-beta pruning need?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>O(b<sup>m/2</sup>)</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>O(log b<sup>m</sup>)</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>O(b<sup>m</sup>)</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>O(bm)</span></button></div><div class="explain" hidden>O(b<sup>m/2</sup>), which means it can search twice as deep in the same time.</div></div><div class="q mcq" id="w3-q8" data-answer="3"><div class="q-meta"><span class="q-num">Question 8</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">How does alpha-beta pruning change the value at the top of the tree?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>It depends on the order of the moves</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>It makes it higher</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>It makes it lower</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>It does not change it</span></button></div><div class="explain" hidden>It only skips branches that cannot affect the decision, so the value at the top, and the move chosen, are always the same as plain minimax.</div></div><div class="q mcq" id="w3-q9" data-answer="1"><div class="q-meta"><span class="q-num">Question 9</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">On MAX's turn, when does alpha-beta pruning stop looking at the remaining moves?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>When v is infinite</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>When v ≥ β</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>When v ≤ α</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>When α and β are both 0</span></button></div><div class="explain" hidden>If MAX can already get v ≥ β, MIN higher up would never let the game reach this point, so the rest can be skipped.</div></div><div class="q mcq" id="w3-q10" data-answer="1"><div class="q-meta"><span class="q-num">Question 10</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">A chess program has 100 seconds per move and examines 10,000 positions a second. Roughly how many plies ahead can alpha-beta pruning look?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>4</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>8</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>16</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>40</span></button></div><div class="explain" hidden>That is 1 million positions per move, roughly 35<sup>8/2</sup>, so about 8 plies ahead, enough for a fairly good chess program. A ply is one move by one player.</div></div><div class="q mcq" id="w3-q11" data-answer="2"><div class="q-meta"><span class="q-num">Question 11</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">A chance node has an outcome worth 4 with probability 0.25, and an outcome worth 8 with probability 0.75. What is it worth?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>4</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>6</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>7</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>8</span></button></div><div class="explain" hidden>Multiply each value by its probability and add them: 0.25 × 4 + 0.75 × 8 = 1 + 6 = <b>7</b>.</div></div><div class="q mcq" id="w3-q12" data-answer="0"><div class="q-meta"><span class="q-num">Question 12</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">Which program ended Marion Tinsley's 40-year reign as checkers champion in 1994?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>Chinook</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>Deep Blue</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>Libratus</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>TD-Gammon</span></button></div><div class="explain" hidden>Chinook used a database of perfect play for every position with 8 or fewer pieces.</div></div><div class="q mcq" id="w3-q13" data-answer="0"><div class="q-meta"><span class="q-num">Question 13</span><span class="q-kind">Multiple choice</span><span class="q-status"></span></div><p class="q-text">How do bridge programs deal with not being able to see the other players' cards?</p><div class="opts"><button type="button" class="opt" data-i="0"><span class="opt-l">A</span><span>They generate about 100 deals that fit the bidding and pick the move that does best on average</span></button><button type="button" class="opt" data-i="1"><span class="opt-l">B</span><span>They play at random</span></button><button type="button" class="opt" data-i="2"><span class="opt-l">C</span><span>They look at the other players' cards</span></button><button type="button" class="opt" data-i="3"><span class="opt-l">D</span><span>They run minimax on the cards they can see</span></button></div><div class="explain" hidden>Each made-up deal is solved as if every card were visible, and the move that wins the most tricks on average is chosen.</div></div><div class="q sa" id="w3-q14"><div class="q-meta"><span class="q-num">Question 14</span><span class="q-kind">Short answer</span><span class="q-status"></span></div><p class="q-text">Why does minimax only play perfectly “against an opponent who also plays perfectly”?</p><textarea rows="3" placeholder="Write your answer here, then compare it with the model answer."></textarea><div class="q-actions"><button type="button" class="btn reveal">Show model answer</button></div><div class="model" hidden><div class="model-l">Model answer</div><p>Minimax assumes MIN always makes the best reply. Against a weaker opponent, MAX still scores at least the minimax value, but a different strategy that takes advantage of the opponent's mistakes could score more.</p><div class="selfmark"><span>How did you do?</span><button type="button" class="btn ok" data-m="1">I got it right</button><button type="button" class="btn no" data-m="0">I missed something</button></div></div></div><div class="q sa" id="w3-q15"><div class="q-meta"><span class="q-num">Question 15</span><span class="q-kind">Short answer</span><span class="q-status"></span></div><p class="q-text">What do alpha and beta stand for in alpha-beta pruning?</p><textarea rows="3" placeholder="Write your answer here, then compare it with the model answer."></textarea><div class="q-actions"><button type="button" class="btn reveal">Show model answer</button></div><div class="model" hidden><div class="model-l">Model answer</div><p>Alpha is the best score MAX is already guaranteed somewhere higher up the tree, so MAX will accept nothing lower. Beta is the best score MIN is already guaranteed, so MIN will allow nothing higher. As soon as a position falls outside this range, the rest of it can be skipped.</p><div class="selfmark"><span>How did you do?</span><button type="button" class="btn ok" data-m="1">I got it right</button><button type="button" class="btn no" data-m="0">I missed something</button></div></div></div><div class="q sa" id="w3-q16"><div class="q-meta"><span class="q-num">Question 16</span><span class="q-kind">Short answer</span><span class="q-status"></span></div><p class="q-text">Why do real game programs stop searching early and estimate the position instead? What makes a good estimate?</p><textarea rows="3" placeholder="Write your answer here, then compare it with the model answer."></textarea><div class="q-actions"><button type="button" class="btn reveal">Show model answer</button></div><div class="model" hidden><div class="model-l">Model answer</div><p>Searching to the end of the game is impossible in practice: chess would need around 35<sup>100</sup> positions. So the program stops at a depth limit and estimates the position, usually by adding up weighted features such as the value of the pieces. A good estimate ranks positions in line with their real chances of winning, and is quick to calculate.</p><div class="selfmark"><span>How did you do?</span><button type="button" class="btn ok" data-m="1">I got it right</button><button type="button" class="btn no" data-m="0">I missed something</button></div></div></div></div></details></section>
+
+  <div class="pager"><a class="prev" href="../Week%202/Week%202%20-%20Search.html"><small>← Previous</small>Uninformed and informed search</a><a class="next" href="../index.html"><small>Back to</small>All weeks</a></div>
+  </main>
+</div>
+<a href="#" class="to-top" aria-label="Back to top">↑</a>
+<script>
+// Expand all answers before printing
+window.addEventListener('beforeprint',()=>document.querySelectorAll('details').forEach(d=>d.open=true));
+// Show a "swipe sideways" hint on anything wider than the screen
+(()=>{const els=[...document.querySelectorAll('.scroll,.table-wrap,pre')];
+const check=()=>els.forEach(e=>e.classList.toggle('is-overflowing',e.scrollWidth>e.clientWidth+4));
+check();addEventListener('resize',check);document.fonts&&document.fonts.ready.then(check);
+els.forEach(e=>e.addEventListener('scroll',()=>e.classList.add('scrolled'),{passive:true}));
+document.querySelectorAll('details.sec').forEach(d=>d.addEventListener('toggle',check));})();
+// Back-to-top button
+(()=>{const b=document.querySelector('.to-top');if(!b)return;addEventListener('scroll',()=>b.classList.toggle('show',scrollY>900),{passive:true});
+b.addEventListener('click',e=>{e.preventDefault();scrollTo({top:0,behavior:'smooth'})});})();
+
+(()=>{
+const qs=[...document.querySelectorAll('.q')]; if(!qs.length) return;
+const KEY='applied-ai-quiz:'+location.pathname;
+let st={}; try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){st={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const bar=document.querySelector('.quizbar');
+const norm=v=>String(v).trim().replace(/[−–—]/g,'-').replace(/\s+/g,'').replace(/^\+/,'');
+function update(){
+  let done=0,score=0; qs.forEach(q=>{const s=st[q.id]; if(s&&s.d){done++;score+=s.s}});
+  bar.querySelector('.qb-score').textContent=score; bar.querySelector('.qb-done').textContent=done;
+  bar.querySelector('.qb-fill').style.width=(done/qs.length*100)+'%';
+  const fin=bar.querySelector('.qb-final');
+  if(done===qs.length){const pct=Math.round(score/qs.length*100);
+    fin.hidden=false; fin.textContent=`You scored ${score} out of ${qs.length}.`;}
+  else fin.hidden=true;
+}
+function mark(q,ok){q.classList.remove('correct','incorrect');q.classList.add(ok?'correct':'incorrect')}
+function record(q,score,p){ if(st[q.id]&&st[q.id].d) return; st[q.id]={d:1,s:score,p}; save(); update(); }
+bar.querySelector('.qb-reset').addEventListener('click',()=>{ if(!confirm('Clear all your answers for this week?')) return; st={}; save(); location.reload(); });
+
+/* multiple choice */
+qs.filter(q=>q.classList.contains('mcq')).forEach(q=>{
+  const ans=+q.dataset.answer, opts=[...q.querySelectorAll('.opt')];
+  const apply=i=>{opts.forEach((o,j)=>{o.disabled=true;if(j===ans)o.classList.add('right');else if(j===i)o.classList.add('wrong');else o.classList.add('dim')});
+    q.querySelector('.explain').hidden=false; mark(q,i===ans)};
+  opts.forEach((o,i)=>o.addEventListener('click',()=>{apply(i);record(q,i===ans?1:0,i)}));
+  const s=st[q.id]; if(s&&s.d) apply(s.p);
+});
+
+/* short answer */
+qs.filter(q=>q.classList.contains('sa')).forEach(q=>{
+  const ta=q.querySelector('textarea'), model=q.querySelector('.model'), rev=q.querySelector('.reveal');
+  const show=()=>{model.hidden=false;rev.disabled=true};
+  rev.addEventListener('click',show);
+  const apply=m=>{show();q.querySelectorAll('.selfmark .btn').forEach(b=>{b.disabled=true;if(b.dataset.m==m)b.classList.add('sel')});mark(q,m==1)};
+  q.querySelectorAll('.selfmark .btn').forEach(b=>b.addEventListener('click',()=>{apply(+b.dataset.m);record(q,+b.dataset.m,{m:+b.dataset.m,t:ta.value})}));
+  const s=st[q.id]; if(s&&s.d){ta.value=(s.p&&s.p.t)||'';apply(s.p.m)}
+});
+
+/* tree tasks: value inputs and/or clickable pruned leaves */
+qs.filter(q=>q.classList.contains('tv')).forEach(q=>{
+  const ins=[...q.querySelectorAll('.tin')], picks=[...q.querySelectorAll('g.pick')], msg=q.querySelector('.q-msg');
+  const toggle=g=>{ if(g.classList.contains('locked'))return; g.classList.toggle('sel'); g.classList.remove('good','bad'); };
+  picks.forEach(g=>{g.addEventListener('click',()=>toggle(g));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(g)}})});
+  ins.forEach(i=>{i.addEventListener('input',()=>i.classList.remove('good','bad'));i.addEventListener('keydown',e=>{if(e.key==='Enter')check()})});
+  function check(silent){
+    let ok=true, empty=0;
+    ins.forEach(i=>{ if(!i.value.trim()){empty++;ok=false;i.classList.remove('good','bad');return}
+      const g=norm(i.value)===norm(i.dataset.answer); i.classList.toggle('good',g); i.classList.toggle('bad',!g); if(!g) ok=false; });
+    let pickErr=0; picks.forEach(g=>{const want=g.dataset.ans==='1', has=g.classList.contains('sel');
+      g.classList.remove('good','bad'); if(want!==has){pickErr++;ok=false; if(has) g.classList.add('bad')} else if(want) g.classList.add('good'); });
+    if(empty&&!silent){msg.className='q-msg bad';msg.textContent=`Fill in all ${ins.length} boxes first.`;return}
+    const wrongVals=ins.filter(i=>i.classList.contains('bad')).length;
+    msg.className='q-msg '+(ok?'good':'bad');
+    msg.textContent= ok?'All correct.': [wrongVals?(wrongVals>1?`${wrongVals} values are wrong.`:'1 value is wrong.'):'', pickErr?'The skipped squares are not quite right.':''].filter(Boolean).join(' ')+' Try again, or show the solution.';
+    mark(q,ok); q.querySelector('.explain').hidden=!ok; record(q,ok?1:0,{});
+  }
+  q.querySelector('.check').addEventListener('click',()=>check());
+  q.querySelector('.solve').addEventListener('click',()=>{
+    ins.forEach(i=>{i.value=i.dataset.answer.replace('-','−');i.classList.remove('bad');i.classList.add('good')});
+    picks.forEach(g=>{g.classList.remove('bad','good');g.classList.toggle('sel',g.dataset.ans==='1');if(g.dataset.ans==='1')g.classList.add('good')});
+    msg.className='q-msg';msg.textContent='Here is the solution.';q.querySelector('.explain').hidden=false;
+    if(!(st[q.id]&&st[q.id].d)){mark(q,false);record(q,0,{})}
+  });
+  const s=st[q.id]; if(s&&s.d){ mark(q,s.s===1); msg.textContent=s.s?'You solved this earlier.':'You tried this earlier. Try again for practice.'; }
+});
+
+/* ordering tasks */
+qs.filter(q=>q.classList.contains('ord')).forEach(q=>{
+  const seq=q.dataset.seq.split('|'), nodes=[...q.querySelectorAll('.ordn')], trail=q.querySelector('.ord-trail'), msg=q.querySelector('.q-msg');
+  const label=n=>n.dataset.key; let pick=[];
+  const NS='http://www.w3.org/2000/svg';
+  function paint(){
+    nodes.forEach(n=>{const i=pick.indexOf(n.dataset.key);n.classList.toggle('chosen',i>=0);n.classList.remove('bad');
+      if(n.tagName.toLowerCase()==='g'){ n.querySelectorAll('.ob').forEach(e=>e.remove());
+        if(i>=0){const x=+n.dataset.x+17,y=+n.dataset.y-15;const c=document.createElementNS(NS,'circle');c.setAttribute('class','ob obadge');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',9);
+          const t=document.createElementNS(NS,'text');t.setAttribute('class','ob obadge-t');t.setAttribute('x',x);t.setAttribute('y',y+3.5);t.textContent=i+1;n.append(c,t)} }
+      else { if(i>=0) n.dataset.n=i+1; else delete n.dataset.n; } });
+    const svgMode=nodes[0].tagName.toLowerCase()==='g';
+    trail.textContent=!pick.length?'':svgMode?pick.join(' → '):pick.length+' of '+seq.length+' placed';
+  }
+  function finish(){
+    const ok=pick.every((k,i)=>k===seq[i]);
+    const first=pick.findIndex((k,i)=>k!==seq[i]);
+    if(!ok){const n=nodes.find(m=>m.dataset.key===pick[first]); if(n) n.classList.add('bad');}
+    msg.className='q-msg '+(ok?'good':'bad');
+    msg.textContent=ok?'That is the right order.':`Not quite. Item ${first+1} is in the wrong place. Choose “Start again” to try again.`;
+    mark(q,ok); q.querySelector('.explain').hidden=false; record(q,ok?1:0,{});
+  }
+  const choose=n=>{ if(pick.includes(n.dataset.key)||pick.length>=seq.length) return; pick.push(n.dataset.key); msg.textContent=''; paint(); if(pick.length===seq.length) finish(); };
+  nodes.forEach(n=>{n.addEventListener('click',()=>choose(n)); n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(n)}})});
+  q.querySelector('.undo').addEventListener('click',()=>{pick.pop();msg.textContent='';paint()});
+  q.querySelector('.clear').addEventListener('click',()=>{pick=[];msg.textContent='';paint()});
+  paint();
+  const s=st[q.id]; if(s&&s.d){ mark(q,s.s===1); q.querySelector('.explain').hidden=false; msg.textContent=s.s?'You solved this earlier.':'You tried this earlier. Try again for practice.'; }
+});
+update();
+})();
+
+</script>
+</body>
+</html>
